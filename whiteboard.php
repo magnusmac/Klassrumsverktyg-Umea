@@ -5963,6 +5963,8 @@ function initPdfWidget(id) {
     state.color = state.color || '#1f2937';
     state.penSize = 3;
     state.eraserSize = 24;
+    state.highlighterSize = 18;
+    state.textSize = 28;
     state.pageNum = state.pageNum || 1;
     state.drawing = false;
     state.currentStroke = null;
@@ -5999,13 +6001,38 @@ function pdfBindDrawing(id) {
         const state = window.pdfWidgets[id];
         if (!state || !state.pdfUrl) return;
         e.preventDefault();
+        const p = getPos(e);
+
+        // Textverktyg: klicka för att placera text, ingen penseldragning
+        if (state.tool === 'text') {
+            showPromptDialog("Skriv text:", "", function(txt) {
+                if (txt !== null && txt.trim() !== '') {
+                    if (!state.annotations[state.pageNum]) state.annotations[state.pageNum] = [];
+                    state.annotations[state.pageNum].push({
+                        text: txt,
+                        x: Math.round(p.x),
+                        y: Math.round(p.y),
+                        color: state.color,
+                        fontSize: state.textSize
+                    });
+                    pdfRedraw(id);
+                    pdfScheduleSave(id);
+                }
+            });
+            return;
+        }
+
         try { draw.setPointerCapture(e.pointerId); } catch (err) {}
         state.drawing = true;
-        const p = getPos(e);
+        let size = state.penSize;
+        if (state.tool === 'eraser') size = state.eraserSize;
+        else if (state.tool === 'highlighter') size = state.highlighterSize;
         state.currentStroke = {
             color: state.color,
-            size: state.tool === 'eraser' ? state.eraserSize : state.penSize,
+            size: size,
             eraser: state.tool === 'eraser',
+            highlighter: state.tool === 'highlighter',
+            alpha: state.tool === 'highlighter' ? 0.35 : 1,
             points: [[Math.round(p.x), Math.round(p.y)]]
         };
     });
@@ -6016,7 +6043,14 @@ function pdfBindDrawing(id) {
         e.preventDefault();
         const p = getPos(e);
         state.currentStroke.points.push([Math.round(p.x), Math.round(p.y)]);
-        pdfDrawLiveSegment(draw.getContext('2d'), state.currentStroke);
+        const ctx = draw.getContext('2d');
+        if (state.currentStroke.highlighter) {
+            // Rita om hela draget så att transparensen blir jämn (inga mörka skarvar)
+            pdfRedraw(id);
+            pdfDrawItem(ctx, state.currentStroke);
+        } else {
+            pdfDrawLiveSegment(ctx, state.currentStroke);
+        }
     });
 
     const endStroke = () => {
@@ -6057,19 +6091,34 @@ function pdfDrawLiveSegment(ctx, stroke) {
     ctx.restore();
 }
 
-function pdfDrawStroke(ctx, stroke) {
-    const pts = stroke.points;
+function pdfDrawItem(ctx, item) {
+    // Textannotering
+    if (item.text !== undefined) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = item.color;
+        ctx.font = `${item.fontSize || 28}px Arial, Helvetica, sans-serif`;
+        ctx.textBaseline = 'top';
+        const lines = String(item.text).split('\n');
+        lines.forEach((line, i) => ctx.fillText(line, item.x, item.y + i * (item.fontSize || 28) * 1.2));
+        ctx.restore();
+        return;
+    }
+
+    // Penseldrag (penna / markeringspenna / sudd)
+    const pts = item.points;
     if (!pts || !pts.length) return;
     ctx.save();
-    ctx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over';
-    ctx.strokeStyle = stroke.color;
-    ctx.fillStyle = stroke.color;
-    ctx.lineWidth = stroke.size;
+    ctx.globalCompositeOperation = item.eraser ? 'destination-out' : 'source-over';
+    ctx.globalAlpha = item.highlighter ? (item.alpha || 0.35) : 1;
+    ctx.strokeStyle = item.color;
+    ctx.fillStyle = item.color;
+    ctx.lineWidth = item.size;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     if (pts.length === 1) {
         ctx.beginPath();
-        ctx.arc(pts[0][0], pts[0][1], stroke.size / 2, 0, Math.PI * 2);
+        ctx.arc(pts[0][0], pts[0][1], item.size / 2, 0, Math.PI * 2);
         ctx.fill();
     } else {
         ctx.beginPath();
@@ -6088,8 +6137,8 @@ function pdfRedraw(id) {
     const ctx = draw.getContext('2d');
     ctx.clearRect(0, 0, draw.width, draw.height);
     const state = window.pdfWidgets[id];
-    const strokes = (state && state.annotations && state.annotations[state.pageNum]) || [];
-    strokes.forEach(s => pdfDrawStroke(ctx, s));
+    const items = (state && state.annotations && state.annotations[state.pageNum]) || [];
+    items.forEach(item => pdfDrawItem(ctx, item));
 }
 
 function pdfLoadDocument(id, url) {
@@ -6154,8 +6203,9 @@ function pdfUpdateToolUI(id) {
     root.querySelectorAll('.pdf-tool-btn').forEach(btn => {
         btn.classList.toggle('bg-gray-300', btn.getAttribute('data-tool') === state.tool);
     });
+    const colorTool = (state.tool === 'pen' || state.tool === 'highlighter' || state.tool === 'text');
     root.querySelectorAll('.pdf-color-btn').forEach(btn => {
-        const active = btn.getAttribute('data-color') === state.color && state.tool === 'pen';
+        const active = btn.getAttribute('data-color') === state.color && colorTool;
         btn.style.outline = active ? '2px solid #111827' : 'none';
         btn.style.outlineOffset = '1px';
     });
@@ -6165,6 +6215,9 @@ function pdfSetTool(id, tool) {
     const state = window.pdfWidgets[id];
     if (!state) return;
     state.tool = tool;
+    const root = document.getElementById(`pdf-widget-${id}`);
+    const draw = root && root.querySelector('.pdf-draw');
+    if (draw) draw.style.cursor = (tool === 'text') ? 'text' : 'crosshair';
     pdfUpdateToolUI(id);
 }
 
@@ -6172,7 +6225,8 @@ function pdfSetColor(id, color) {
     const state = window.pdfWidgets[id];
     if (!state) return;
     state.color = color;
-    state.tool = 'pen';
+    // Behåll markeringspenna/text om de är aktiva, byt annars till penna
+    if (state.tool === 'eraser') state.tool = 'pen';
     pdfUpdateToolUI(id);
 }
 

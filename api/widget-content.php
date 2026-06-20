@@ -859,6 +859,12 @@ break;
                                     <button onclick="pdfSetTool(' . $id . ', \'pen\')" data-tool="pen" class="pdf-tool-btn p-1 rounded hover:bg-gray-200" title="Penna">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
                                     </button>
+                                    <button onclick="pdfSetTool(' . $id . ', \'highlighter\')" data-tool="highlighter" class="pdf-tool-btn p-1 rounded hover:bg-gray-200" title="Markeringspenna">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+                                    </button>
+                                    <button onclick="pdfSetTool(' . $id . ', \'text\')" data-tool="text" class="pdf-tool-btn p-1 rounded hover:bg-gray-200" title="Text (klicka för att placera)">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                                    </button>
                                     <button onclick="pdfSetTool(' . $id . ', \'eraser\')" data-tool="eraser" class="pdf-tool-btn p-1 rounded hover:bg-gray-200" title="Sudd">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-7 7"/></svg>
                                     </button>
@@ -867,6 +873,7 @@ break;
                                     <button onclick="pdfSetColor(' . $id . ', \'#ef4444\')" data-color="#ef4444" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#ef4444" title="Röd"></button>
                                     <button onclick="pdfSetColor(' . $id . ', \'#2563eb\')" data-color="#2563eb" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#2563eb" title="Blå"></button>
                                     <button onclick="pdfSetColor(' . $id . ', \'#16a34a\')" data-color="#16a34a" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#16a34a" title="Grön"></button>
+                                    <button onclick="pdfSetColor(' . $id . ', \'#facc15\')" data-color="#facc15" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#facc15" title="Gul"></button>
                                     <span class="w-px h-5 bg-gray-300 mx-1"></span>
                                     <button onclick="pdfClearPage(' . $id . ')" class="p-1 rounded hover:bg-gray-200 text-gray-600" title="Rensa sidan">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
