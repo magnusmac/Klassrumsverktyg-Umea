@@ -5930,18 +5930,19 @@ function saveEmbedUrl(id) {
 
 // ---- PDF-widget (skriva på PDF och spara anteckningar) ----
 window.pdfWidgets = window.pdfWidgets || {};
-const PDFJS_VERSION = '3.11.174';
+// PDF.js v3.11.174 buntas lokalt (assets/vendor/pdfjs) för on-prem-drift utan internet.
+const PDFJS_LIB_URL = '/assets/vendor/pdfjs/pdf.js';
+const PDFJS_WORKER_URL = '/assets/vendor/pdfjs/pdf.worker.js';
 
 function loadPdfJs(callback) {
     if (window.pdfjsLib) { callback(); return; }
     if (window._pdfJsLoading) { window._pdfJsLoading.push(callback); return; }
     window._pdfJsLoading = [callback];
     const script = document.createElement('script');
-    script.src = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.js`;
+    script.src = PDFJS_LIB_URL;
     script.onload = function() {
         try {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-                `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`;
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
         } catch (e) {}
         const cbs = window._pdfJsLoading || [];
         window._pdfJsLoading = null;
@@ -5949,7 +5950,7 @@ function loadPdfJs(callback) {
     };
     script.onerror = function() {
         window._pdfJsLoading = null;
-        console.error('Kunde inte ladda PDF.js från CDN.');
+        console.error('Kunde inte ladda PDF.js (assets/vendor/pdfjs/pdf.js).');
     };
     document.head.appendChild(script);
 }
