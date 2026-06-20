@@ -1,0 +1,41 @@
+{
+  "name": "Klassrumsverktyg",
+  "short_name": "Klassrum",
+  "description": "Digitala verktyg för klassrummet – whiteboard, widgets och mer.",
+  "lang": "sv",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#111827",
+  "background_color": "#111827",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ny whiteboard",
+      "short_name": "Whiteboard",
+      "url": "/",
+      "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mina tavlor",
+      "short_name": "Tavlor",
+      "url": "/dashboard.php",
+      "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

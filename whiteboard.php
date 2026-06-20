@@ -130,6 +130,9 @@ $stmt->execute([$whiteboard['id']]);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Whiteboard - <?php echo htmlspecialchars($boardCode); ?></title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#111827">
+    <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
     <link href="/assets/vendor/tailwind/tailwind.min.css" rel="stylesheet">
     <script src="/assets/vendor/lucide/lucide.min.js"></script>
     <!-- Replace the old interact.js with the newer version -->
@@ -1112,7 +1115,7 @@ body.dragging .widget * {
         loadYouTubeAPI();
     </script>
     <script>
-    const whiteboardUserId = <?php 
+    const whiteboardUserId = <?php
         if (isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id'])) {
             echo json_encode(intval($_SESSION['user_id'])); // Force integer and JSON encoding
         } else {
@@ -1120,6 +1123,11 @@ body.dragging .widget * {
         }
     ?>;
 </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
 </head>
 <script>
     const whiteboardId = <?php echo $whiteboard['id']; ?>;

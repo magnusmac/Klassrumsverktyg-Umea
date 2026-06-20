@@ -26,7 +26,11 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - <?= htmlspecialchars($siteName) ?></title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#111827">
+    <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
     <link href="/assets/vendor/tailwind/tailwind.min.css" rel="stylesheet">
+    <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }</script>
 </head>
 <body class="bg-gray-100">
     <div class="flex h-screen">
