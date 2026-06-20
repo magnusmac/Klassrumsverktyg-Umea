@@ -1,0 +1,20 @@
+# Generated database config (written by install.php, contains credentials)
+src/Config/Database.php
+private/src/Config/Database.php
+
+# Install lock file (created after setup to prevent re-running)
+install/.lock
+
+# Uploaded user files
+assets/uploads/pdfs/*
+assets/uploads/backgrounds/*
+!assets/uploads/pdfs/.gitignore
+!assets/uploads/backgrounds/.gitignore
+
+# PHP error logs
+*.log
+logs/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
