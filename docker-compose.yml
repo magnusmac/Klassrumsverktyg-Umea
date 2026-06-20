@@ -1,0 +1,23 @@
+services:
+  # Webbservern (PHP + Apache) – kör själva applikationen
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    command: bash -lc "mkdir -p /var/www/html/assets/uploads/pdfs && chmod -R 777 /var/www/html/assets/uploads && apache2-foreground"
+
+  # Databasen (MariaDB)
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: klassrum123
+      MYSQL_DATABASE: klassrum
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
