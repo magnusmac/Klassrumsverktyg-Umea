@@ -369,6 +369,12 @@ $stmt->execute([$whiteboard['id']]);
         .widget[data-type="timer"] .widget-scaling-container { padding: 0.25rem; }
         .widget[data-type="timer"] .timer-controls { padding: 0.25rem 0.5rem; }
 
+        /* Full-yta för inbäddning och PDF (ingen inre padding) */
+        .widget[data-type="embed"] .widget-content-wrapper,
+        .widget[data-type="pdf"] .widget-content-wrapper { padding: 0; }
+        .widget[data-type="embed"] .widget-scaling-container,
+        .widget[data-type="pdf"] .widget-scaling-container { padding: 0; align-items: stretch; }
+
         .timer-digit-container {
             display: inline-block;
             text-align: center;
@@ -1232,11 +1238,23 @@ body.dragging .widget * {
                 <span class="text-xs">Omröstning</span>
             </button>
 
-            <button onclick="addWidget('image')" 
+            <button onclick="addWidget('image')"
         class="flex flex-col items-center justify-center p-2 rounded-lg bg-white shadow-sm hover:bg-blue-50 hover:text-blue-600 transition-colors">
     <i data-lucide="image" class="h-5 w-5 mb-1 text-blue-500"></i>
     <span class="text-xs">Bild</span>
 </button>
+
+            <button onclick="addWidget('embed')"
+                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-white shadow-sm hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                <i data-lucide="presentation" class="h-5 w-5 mb-1 text-blue-500"></i>
+                <span class="text-xs">Inbäddning</span>
+            </button>
+
+            <button onclick="addWidget('pdf')"
+                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-white shadow-sm hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                <i data-lucide="file-text" class="h-5 w-5 mb-1 text-blue-500"></i>
+                <span class="text-xs">PDF</span>
+            </button>
 
         </div>
 
@@ -1544,6 +1562,9 @@ function loadWidgetContent(widget) {
                 else if (widget.type === 'timer') {
                     // Initialize circular progress UI for timers
                     setTimeout(() => initTimerCircularUI(widget.id), 50);
+                }
+                else if (widget.type === 'pdf') {
+                    setTimeout(() => initPdfWidget(widget.id), 50);
                 }
                 
                 // Update widget scaling after content is loaded
@@ -5891,6 +5912,342 @@ function toggleImageVisibility(id) {
             type: 'image'
         });
     });
+}
+
+// ---- Inbäddnings-widget (Google Presentation m.m.) ----
+function saveEmbedUrl(id) {
+    getWidgetSettings(id, function(settings) {
+        const currentUrl = settings.url || '';
+        showPromptDialog("Klistra in länk att bädda in (t.ex. en Google Presentation):", currentUrl, function(url) {
+            if (url !== null) {
+                const newSettings = { url: (url || '').trim() };
+                updateWidgetSettings(id, newSettings);
+                loadWidgetContent({ id: id, type: 'embed' });
+            }
+        });
+    });
+}
+
+// ---- PDF-widget (skriva på PDF och spara anteckningar) ----
+window.pdfWidgets = window.pdfWidgets || {};
+const PDFJS_VERSION = '3.11.174';
+
+function loadPdfJs(callback) {
+    if (window.pdfjsLib) { callback(); return; }
+    if (window._pdfJsLoading) { window._pdfJsLoading.push(callback); return; }
+    window._pdfJsLoading = [callback];
+    const script = document.createElement('script');
+    script.src = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.js`;
+    script.onload = function() {
+        try {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+                `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`;
+        } catch (e) {}
+        const cbs = window._pdfJsLoading || [];
+        window._pdfJsLoading = null;
+        cbs.forEach(cb => cb());
+    };
+    script.onerror = function() {
+        window._pdfJsLoading = null;
+        console.error('Kunde inte ladda PDF.js från CDN.');
+    };
+    document.head.appendChild(script);
+}
+
+function initPdfWidget(id) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    if (!root) return;
+    const state = window.pdfWidgets[id] || (window.pdfWidgets[id] = {});
+    state.id = id;
+    state.tool = state.tool || 'pen';
+    state.color = state.color || '#1f2937';
+    state.penSize = 3;
+    state.eraserSize = 24;
+    state.pageNum = state.pageNum || 1;
+    state.drawing = false;
+    state.currentStroke = null;
+
+    pdfBindDrawing(id);
+
+    getWidgetSettings(id, function(settings) {
+        state.pdfUrl = settings.pdfUrl || root.getAttribute('data-pdf-url') || '';
+        state.annotations = settings.annotations || {};
+        if (Array.isArray(state.annotations)) state.annotations = {};
+        pdfUpdateToolUI(id);
+        if (state.pdfUrl) {
+            pdfLoadDocument(id, state.pdfUrl);
+        }
+    });
+}
+
+function pdfBindDrawing(id) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    if (!root) return;
+    const draw = root.querySelector('.pdf-draw');
+    if (!draw || draw._pdfBound) return;
+    draw._pdfBound = true;
+
+    const getPos = (e) => {
+        const rect = draw.getBoundingClientRect();
+        return {
+            x: (e.clientX - rect.left) * (draw.width / rect.width),
+            y: (e.clientY - rect.top) * (draw.height / rect.height)
+        };
+    };
+
+    draw.addEventListener('pointerdown', (e) => {
+        const state = window.pdfWidgets[id];
+        if (!state || !state.pdfUrl) return;
+        e.preventDefault();
+        try { draw.setPointerCapture(e.pointerId); } catch (err) {}
+        state.drawing = true;
+        const p = getPos(e);
+        state.currentStroke = {
+            color: state.color,
+            size: state.tool === 'eraser' ? state.eraserSize : state.penSize,
+            eraser: state.tool === 'eraser',
+            points: [[Math.round(p.x), Math.round(p.y)]]
+        };
+    });
+
+    draw.addEventListener('pointermove', (e) => {
+        const state = window.pdfWidgets[id];
+        if (!state || !state.drawing || !state.currentStroke) return;
+        e.preventDefault();
+        const p = getPos(e);
+        state.currentStroke.points.push([Math.round(p.x), Math.round(p.y)]);
+        pdfDrawLiveSegment(draw.getContext('2d'), state.currentStroke);
+    });
+
+    const endStroke = () => {
+        const state = window.pdfWidgets[id];
+        if (!state || !state.drawing) return;
+        state.drawing = false;
+        if (state.currentStroke && state.currentStroke.points.length) {
+            if (!state.annotations[state.pageNum]) state.annotations[state.pageNum] = [];
+            state.annotations[state.pageNum].push(state.currentStroke);
+            pdfScheduleSave(id);
+        }
+        state.currentStroke = null;
+    };
+    draw.addEventListener('pointerup', endStroke);
+    draw.addEventListener('pointercancel', endStroke);
+}
+
+function pdfDrawLiveSegment(ctx, stroke) {
+    const pts = stroke.points;
+    ctx.save();
+    ctx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = stroke.color;
+    ctx.fillStyle = stroke.color;
+    ctx.lineWidth = stroke.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (pts.length < 2) {
+        ctx.beginPath();
+        ctx.arc(pts[0][0], pts[0][1], stroke.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        const a = pts[pts.length - 2], b = pts[pts.length - 1];
+        ctx.beginPath();
+        ctx.moveTo(a[0], a[1]);
+        ctx.lineTo(b[0], b[1]);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function pdfDrawStroke(ctx, stroke) {
+    const pts = stroke.points;
+    if (!pts || !pts.length) return;
+    ctx.save();
+    ctx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = stroke.color;
+    ctx.fillStyle = stroke.color;
+    ctx.lineWidth = stroke.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (pts.length === 1) {
+        ctx.beginPath();
+        ctx.arc(pts[0][0], pts[0][1], stroke.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function pdfRedraw(id) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    if (!root) return;
+    const draw = root.querySelector('.pdf-draw');
+    if (!draw) return;
+    const ctx = draw.getContext('2d');
+    ctx.clearRect(0, 0, draw.width, draw.height);
+    const state = window.pdfWidgets[id];
+    const strokes = (state && state.annotations && state.annotations[state.pageNum]) || [];
+    strokes.forEach(s => pdfDrawStroke(ctx, s));
+}
+
+function pdfLoadDocument(id, url) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    if (!root) return;
+    const loading = root.querySelector('.pdf-loading');
+    const empty = root.querySelector('.pdf-empty');
+    const wrap = root.querySelector('.pdf-canvas-wrap');
+    if (empty) empty.classList.add('hidden');
+    if (loading) loading.classList.remove('hidden');
+
+    loadPdfJs(function() {
+        window.pdfjsLib.getDocument(url).promise.then(function(doc) {
+            const state = window.pdfWidgets[id];
+            if (!state) return;
+            state.pdfDoc = doc;
+            state.numPages = doc.numPages;
+            if (state.pageNum > state.numPages) state.pageNum = 1;
+            if (loading) loading.classList.add('hidden');
+            if (wrap) wrap.style.display = '';
+            pdfRenderPage(id);
+        }).catch(function(err) {
+            console.error('Fel vid laddning av PDF:', err);
+            if (loading) loading.classList.add('hidden');
+            if (empty) empty.classList.remove('hidden');
+        });
+    });
+}
+
+function pdfRenderPage(id) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    const state = window.pdfWidgets[id];
+    if (!root || !state || !state.pdfDoc) return;
+    state.pdfDoc.getPage(state.pageNum).then(function(page) {
+        const viewport = page.getViewport({ scale: 1.5 });
+        const base = root.querySelector('.pdf-base');
+        const draw = root.querySelector('.pdf-draw');
+        base.width = viewport.width;
+        base.height = viewport.height;
+        draw.width = viewport.width;
+        draw.height = viewport.height;
+        const ctx = base.getContext('2d');
+        page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
+            pdfRedraw(id);
+        });
+        pdfUpdatePageIndicator(id);
+    });
+}
+
+function pdfUpdatePageIndicator(id) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    const state = window.pdfWidgets[id];
+    if (!root || !state) return;
+    const el = root.querySelector('.pdf-page-indicator');
+    if (el) el.textContent = (state.numPages ? `${state.pageNum} / ${state.numPages}` : '–');
+}
+
+function pdfUpdateToolUI(id) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    const state = window.pdfWidgets[id];
+    if (!root || !state) return;
+    root.querySelectorAll('.pdf-tool-btn').forEach(btn => {
+        btn.classList.toggle('bg-gray-300', btn.getAttribute('data-tool') === state.tool);
+    });
+    root.querySelectorAll('.pdf-color-btn').forEach(btn => {
+        const active = btn.getAttribute('data-color') === state.color && state.tool === 'pen';
+        btn.style.outline = active ? '2px solid #111827' : 'none';
+        btn.style.outlineOffset = '1px';
+    });
+}
+
+function pdfSetTool(id, tool) {
+    const state = window.pdfWidgets[id];
+    if (!state) return;
+    state.tool = tool;
+    pdfUpdateToolUI(id);
+}
+
+function pdfSetColor(id, color) {
+    const state = window.pdfWidgets[id];
+    if (!state) return;
+    state.color = color;
+    state.tool = 'pen';
+    pdfUpdateToolUI(id);
+}
+
+function pdfClearPage(id) {
+    const state = window.pdfWidgets[id];
+    if (!state) return;
+    state.annotations[state.pageNum] = [];
+    pdfRedraw(id);
+    pdfScheduleSave(id);
+}
+
+function pdfPrevPage(id) {
+    const state = window.pdfWidgets[id];
+    if (!state || !state.pdfDoc || state.pageNum <= 1) return;
+    state.pageNum--;
+    pdfRenderPage(id);
+}
+
+function pdfNextPage(id) {
+    const state = window.pdfWidgets[id];
+    if (!state || !state.pdfDoc || state.pageNum >= state.numPages) return;
+    state.pageNum++;
+    pdfRenderPage(id);
+}
+
+function pdfScheduleSave(id) {
+    const state = window.pdfWidgets[id];
+    if (!state) return;
+    if (state.saveTimer) clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(function() {
+        updateWidgetSettings(id, {
+            pdfUrl: state.pdfUrl || '',
+            annotations: state.annotations || {}
+        });
+    }, 700);
+}
+
+function pdfUpload(id) {
+    const root = document.getElementById(`pdf-widget-${id}`);
+    if (!root) return;
+    const input = root.querySelector('.pdf-file-input');
+    if (!input) return;
+    input.value = '';
+    input.onchange = function() {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('pdf', file);
+        const loading = root.querySelector('.pdf-loading');
+        const empty = root.querySelector('.pdf-empty');
+        if (empty) empty.classList.add('hidden');
+        if (loading) loading.classList.remove('hidden');
+        fetch('/api/upload-pdf.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.url) {
+                    const state = window.pdfWidgets[id] || (window.pdfWidgets[id] = {});
+                    state.pdfUrl = data.url;
+                    state.annotations = {};
+                    state.pageNum = 1;
+                    root.setAttribute('data-pdf-url', data.url);
+                    updateWidgetSettings(id, { pdfUrl: data.url, annotations: {} });
+                    pdfLoadDocument(id, data.url);
+                } else {
+                    if (loading) loading.classList.add('hidden');
+                    alert('Kunde inte ladda upp PDF: ' + (data.error || 'okänt fel'));
+                }
+            })
+            .catch(err => {
+                if (loading) loading.classList.add('hidden');
+                console.error(err);
+                alert('Kunde inte ladda upp PDF.');
+            });
+    };
+    input.click();
 }
 
 // Custom prompt dialog that won't disrupt fullscreen

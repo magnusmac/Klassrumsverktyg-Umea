@@ -34,6 +34,8 @@ function outputWidgetWrapper($type, $id, $content, $extraControls = '') {
         'trafficlight' => 'bg-purple-500',
         'poll' => 'bg-indigo-500',
         'image' => 'bg-indigo-500',
+        'embed' => 'bg-teal-500',
+        'pdf' => 'bg-orange-500',
         'default' => 'bg-gray-500'
     ];
     
@@ -50,13 +52,15 @@ function outputWidgetWrapper($type, $id, $content, $extraControls = '') {
         'trafficlight' => 'Trafikljus',
         'poll' => 'Omröstning',
         'image' => 'Bild',
+        'embed' => 'Inbäddning',
+        'pdf' => 'PDF',
         'default' => 'Widget'
     ];
     
     $bgColor = $bgColors[$baseType] ?? $bgColors['default'];
     $displayName = $swedishNames[$baseType] ?? $swedishNames['default'];
-    $innerClasses = ($baseType === 'timer') 
-        ? 'h-full w-full flex' 
+    $innerClasses = in_array($baseType, ['timer', 'embed', 'pdf'])
+        ? 'h-full w-full flex'
         : 'h-full w-full flex items-center justify-center';
     
     echo '
@@ -74,6 +78,37 @@ function outputWidgetWrapper($type, $id, $content, $extraControls = '') {
             </div>
         </div>
     </div>';
+}
+
+// Konvertera vanliga Google-länkar (m.fl.) till inbäddningsbart format
+function toEmbedUrl($url) {
+    $url = trim($url);
+    if ($url === '') {
+        return '';
+    }
+
+    // Google Presentationer -> /embed
+    if (preg_match('#docs\.google\.com/presentation/d/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/presentation/d/' . $m[1] . '/embed?start=false&loop=false&delayms=3000';
+    }
+    // Google Dokument -> /preview
+    if (preg_match('#docs\.google\.com/document/d/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/document/d/' . $m[1] . '/preview';
+    }
+    // Google Kalkylark -> /preview
+    if (preg_match('#docs\.google\.com/spreadsheets/d/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/spreadsheets/d/' . $m[1] . '/preview';
+    }
+    // Google Formulär -> viewform
+    if (preg_match('#docs\.google\.com/forms/d/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/forms/d/' . $m[1] . '/viewform?embedded=true';
+    }
+
+    // Lägg till protokoll om det saknas
+    if (!preg_match('#^https?://#i', $url)) {
+        $url = 'https://' . $url;
+    }
+    return $url;
 }
 
 switch ($type) {
@@ -765,6 +800,103 @@ break;
                             outputWidgetWrapper('image', $id, $content, $extraControls);
                             break;
                 
+                    case 'embed':
+                        $url = $settings['url'] ?? '';
+                        $embedUrl = toEmbedUrl($url);
+
+                        $extraControls = '
+                            <button onclick="saveEmbedUrl(' . $id . ')" class="text-white hover:text-blue-200 touch-manipulation" title="Ange länk">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </button>
+                            ' . ($embedUrl ? '
+                            <a href="' . htmlspecialchars($embedUrl) . '" target="_blank" rel="noopener" class="text-white hover:text-blue-200 touch-manipulation" title="Öppna i ny flik">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                            </a>' : '');
+
+                        $content = '
+                            <div class="embed-container w-full h-full">
+                                ' . ($embedUrl ? '
+                                <iframe src="' . htmlspecialchars($embedUrl) . '"
+                                        class="w-full h-full border-0"
+                                        allowfullscreen
+                                        referrerpolicy="no-referrer-when-downgrade"
+                                        allow="autoplay; fullscreen"></iframe>' : '
+                                <div class="w-full h-full flex flex-col items-center justify-center text-center text-gray-400 p-4">
+                                    <svg class="h-12 w-12 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                                    </svg>
+                                    <span>Klicka på redigera-ikonen för att klistra in en länk<br>(t.ex. en Google Presentation)</span>
+                                </div>') . '
+                            </div>';
+
+                        outputWidgetWrapper('embed', $id, $content, $extraControls);
+                        break;
+
+                    case 'pdf':
+                        $pdfUrl = $settings['pdfUrl'] ?? '';
+
+                        $extraControls = '
+                            <button onclick="pdfUpload(' . $id . ')" class="text-white hover:text-blue-200 touch-manipulation" title="Ladda upp PDF">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                            </button>';
+
+                        $content = '
+                            <div class="pdf-widget w-full h-full flex flex-col" id="pdf-widget-' . $id . '" data-pdf-url="' . htmlspecialchars($pdfUrl) . '">
+                                <div class="pdf-toolbar flex items-center gap-1 p-1 bg-gray-100 border-b border-gray-200 flex-wrap" style="touch-action: none;">
+                                    <button onclick="pdfSetTool(' . $id . ', \'pen\')" data-tool="pen" class="pdf-tool-btn p-1 rounded hover:bg-gray-200" title="Penna">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                                    </button>
+                                    <button onclick="pdfSetTool(' . $id . ', \'eraser\')" data-tool="eraser" class="pdf-tool-btn p-1 rounded hover:bg-gray-200" title="Sudd">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-7 7"/></svg>
+                                    </button>
+                                    <span class="w-px h-5 bg-gray-300 mx-1"></span>
+                                    <button onclick="pdfSetColor(' . $id . ', \'#1f2937\')" data-color="#1f2937" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#1f2937" title="Svart"></button>
+                                    <button onclick="pdfSetColor(' . $id . ', \'#ef4444\')" data-color="#ef4444" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#ef4444" title="Röd"></button>
+                                    <button onclick="pdfSetColor(' . $id . ', \'#2563eb\')" data-color="#2563eb" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#2563eb" title="Blå"></button>
+                                    <button onclick="pdfSetColor(' . $id . ', \'#16a34a\')" data-color="#16a34a" class="pdf-color-btn w-5 h-5 rounded-full border border-gray-300" style="background:#16a34a" title="Grön"></button>
+                                    <span class="w-px h-5 bg-gray-300 mx-1"></span>
+                                    <button onclick="pdfClearPage(' . $id . ')" class="p-1 rounded hover:bg-gray-200 text-gray-600" title="Rensa sidan">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    </button>
+                                    <span class="flex-grow"></span>
+                                    <button onclick="pdfPrevPage(' . $id . ')" class="p-1 rounded hover:bg-gray-200 text-gray-600" title="Föregående sida">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                                    </button>
+                                    <span class="pdf-page-indicator text-xs text-gray-600 min-w-[3rem] text-center">–</span>
+                                    <button onclick="pdfNextPage(' . $id . ')" class="p-1 rounded hover:bg-gray-200 text-gray-600" title="Nästa sida">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                                    </button>
+                                </div>
+                                <div class="pdf-stage flex-1 overflow-auto bg-gray-50 flex items-start justify-center p-2">
+                                    <div class="pdf-canvas-wrap" style="position:relative; line-height:0; ' . ($pdfUrl ? '' : 'display:none;') . '">
+                                        <canvas class="pdf-base" style="display:block; max-width:100%; height:auto;"></canvas>
+                                        <canvas class="pdf-draw" style="position:absolute; top:0; left:0; width:100%; height:100%; touch-action:none; cursor:crosshair;"></canvas>
+                                    </div>
+                                    <div class="pdf-empty ' . ($pdfUrl ? 'hidden' : '') . ' flex flex-col items-center justify-center text-center text-gray-400 h-full p-4">
+                                        <svg class="h-12 w-12 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                        <span>Ladda upp en PDF med upp-ikonen för att skriva på den.</span>
+                                    </div>
+                                    <div class="pdf-loading hidden flex items-center justify-center text-gray-400 h-full">Laddar PDF…</div>
+                                </div>
+                                <input type="file" accept="application/pdf,.pdf" class="pdf-file-input hidden">
+                            </div>';
+
+                        outputWidgetWrapper('pdf', $id, $content, $extraControls);
+                        break;
+
                     default:
                         echo '<div class="p-4 text-center">Ogiltig widget-typ</div>';
                 }

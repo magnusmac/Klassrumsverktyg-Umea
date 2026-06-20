@@ -14,14 +14,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
        'timer' => ['minutes' => 5],
        'text' => ['content' => ''],
        'groups' => ['names' => '', 'groupCount' => 2],
-       'brainbreak' => ['lastActivity' => '']
+       'brainbreak' => ['lastActivity' => ''],
+       'embed' => ['url' => ''],
+       'pdf' => ['pdfUrl' => '', 'annotations' => (object)[]]
    ];
-   
+
    $settings = $defaultSettings[$data['type']] ?? [];
-   
+
    // Sätt standardstorlekar baserat på widget-typ
-   $size_w = $data['type'] === 'groups' ? 300 : ($data['size_w'] ?? 200);
-   $size_h = $data['type'] === 'groups' ? 250 : ($data['size_h'] ?? 200);
+   $defaultSizes = [
+       'groups' => [300, 250],
+       'embed' => [480, 360],
+       'pdf' => [520, 680]
+   ];
+   $size_w = $defaultSizes[$data['type']][0] ?? ($data['size_w'] ?? 200);
+   $size_h = $defaultSizes[$data['type']][1] ?? ($data['size_h'] ?? 200);
    
    $stmt = $pdo->prepare("
        INSERT INTO widgets (
