@@ -91,7 +91,7 @@ $whiteboards = $controller->getWhiteboardsForUser($userId);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mina Whiteboards</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/vendor/lucide/lucide.min.js"></script>
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
 <nav class="bg-gray-900">

@@ -68,7 +68,7 @@ foreach ($users as $user) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hantera Whiteboard-begränsningar - <?= htmlspecialchars($siteName) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/assets/vendor/fontawesome/all.min.css">
 </head>
 <body class="bg-gray-100">
 <?php include_once 'nav.php'; ?>

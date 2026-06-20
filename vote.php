@@ -56,7 +56,7 @@ $voted = isset($_GET['voted']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rösta</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="/assets/vendor/tailwind/tailwind.min.css">
 </head>
 <body class="bg-gray-100 min-h-screen py-12 px-4">
     <div class="max-w-lg mx-auto bg-white rounded-lg shadow-lg overflow-hidden">

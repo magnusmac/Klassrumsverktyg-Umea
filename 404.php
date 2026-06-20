@@ -9,8 +9,8 @@ http_response_code(404);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sidan hittades inte - Klassrumsverktyg</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="/assets/vendor/tailwind/tailwind.min.css" rel="stylesheet">
+    <script src="/assets/vendor/lucide/lucide.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
     <!-- Header -->

@@ -22,7 +22,7 @@ function nav_item(string $href, string $label, string $faIcon, string $current):
          . '</a>';
 }
 ?>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="/assets/vendor/fontawesome/all.min.css" referrerpolicy="no-referrer" />
 
 <!-- Navbar -->
 <nav class="bg-gray-900 sticky top-0 z-40 shadow">

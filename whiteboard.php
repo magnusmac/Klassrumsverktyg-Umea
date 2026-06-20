@@ -130,10 +130,10 @@ $stmt->execute([$whiteboard['id']]);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Whiteboard - <?php echo htmlspecialchars($boardCode); ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="/assets/vendor/tailwind/tailwind.min.css" rel="stylesheet">
+    <script src="/assets/vendor/lucide/lucide.min.js"></script>
     <!-- Replace the old interact.js with the newer version -->
-    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.17/dist/interact.min.js"></script>
+    <script src="/assets/vendor/interactjs/interact.min.js"></script>
     
     <script src="/assets/js/background-handler.js"></script>
     <script src="/assets/js/widgets/poll-editor.js"></script>

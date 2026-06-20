@@ -154,8 +154,8 @@ if (isset($_SESSION['user_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($siteName) ?> - Digital Whiteboard</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="/assets/vendor/tailwind/tailwind.min.css" rel="stylesheet">
+    <script src="/assets/vendor/lucide/lucide.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
   <!-- Header -->

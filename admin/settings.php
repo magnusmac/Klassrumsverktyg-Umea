@@ -272,7 +272,7 @@ $contactInfo    = (string) get_setting($pdo, 'contact_info_text', '');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Systeminställningar – <?= htmlspecialchars($siteName !== '' ? $siteName : 'Klassrumsverktyg') ?> (On‑Prem)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/assets/vendor/fontawesome/all.min.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
 <?php include_once 'nav.php'; ?>

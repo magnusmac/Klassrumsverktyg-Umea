@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Skapa omröstning</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="/assets/vendor/tailwind/tailwind.min.css">
 </head>
 <body>
     <div class="bg-white rounded-lg shadow-lg p-6 max-w-lg mx-auto">
