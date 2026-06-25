@@ -834,7 +834,11 @@ break;
                                         <line x1="8" y1="21" x2="16" y2="21"></line>
                                         <line x1="12" y1="17" x2="12" y2="21"></line>
                                     </svg>
-                                    <span>Klicka på redigera-ikonen för att klistra in en länk<br>(t.ex. en Google Presentation)</span>
+                                    <span class="mb-3">Klistra in en länk till t.ex. en Google Presentation</span>
+                                    <button onclick="saveEmbedUrl(' . $id . ')" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 flex items-center gap-2">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        Ange länk
+                                    </button>
                                 </div>') . '
                             </div>';
 
@@ -879,6 +883,11 @@ break;
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                     </button>
                                     <span class="flex-grow"></span>
+                                    <button onclick="pdfUpload(' . $id . ')" class="p-1 rounded hover:bg-blue-100 text-blue-600 font-medium flex items-center gap-1" title="Ladda upp PDF">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        <span class="text-xs">Ladda upp</span>
+                                    </button>
+                                    <span class="w-px h-5 bg-gray-300 mx-1"></span>
                                     <button onclick="pdfPrevPage(' . $id . ')" class="p-1 rounded hover:bg-gray-200 text-gray-600" title="Föregående sida">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
                                     </button>
