@@ -4,12 +4,6 @@ require_once __DIR__ . '/../src/Config/Database.php';
 
 header('Content-Type: application/json');
 
-// Kontrollera att användaren är inloggad
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
-
 // Kontrollera att en fil har laddats upp
 if (!isset($_FILES['pdf'])) {
     echo json_encode(['success' => false, 'error' => 'No file uploaded']);
