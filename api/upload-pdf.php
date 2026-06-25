@@ -34,7 +34,7 @@ if ($file['size'] > $max_size) {
 }
 
 // Skapa uppladdningsmapp om den inte finns
-$upload_dir = '../../assets/uploads/pdfs/';
+$upload_dir = __DIR__ . '/../assets/uploads/pdfs/';
 if (!file_exists($upload_dir)) {
     mkdir($upload_dir, 0777, true);
 }
