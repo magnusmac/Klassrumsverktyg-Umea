@@ -176,7 +176,10 @@ class Database {
         try {
             $this->conn = new PDO($dsn, $user, $pass, $options);
         } catch (PDOException $e) {
-            die('Connection failed: ' . $e->getMessage());
+            // Logga detaljerna men visa aldrig dem för besökaren
+            error_log('DB connection failed: ' . $e->getMessage());
+            http_response_code(500);
+            die('Databasanslutning misslyckades. Kontakta administratören.');
         }
     }
     public function getConnection(){ return $this->conn; }

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 header('Content-Type: application/json');
 
@@ -15,10 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     
+    require_widget_access($pdo, $data['widget_id']);
+
     try {
         $stmt = $pdo->prepare("
-            UPDATE widgets 
-            SET position_x = ?, 
+            UPDATE widgets
+            SET position_x = ?,
                 position_y = ?, 
                 updated_at = NOW() 
             WHERE id = ?

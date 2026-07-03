@@ -114,6 +114,10 @@ if ($whiteboard['expires_at'] && strtotime($whiteboard['expires_at']) < time()) 
     exit;
 }
 
+// Registrera att tavlan öppnats i denna session – widget-API:erna
+// (api/board-access.php) kräver detta för att tillåta ändringar.
+$_SESSION['opened_boards'][$whiteboard['id']] = true;
+
 // Get widgets
 $stmt = $pdo->prepare("SELECT * FROM widgets WHERE whiteboard_id = ? ORDER BY created_at");
 $stmt->execute([$whiteboard['id']]);
@@ -6284,6 +6288,7 @@ function pdfUpload(id) {
         if (!file) return;
         const formData = new FormData();
         formData.append('pdf', file);
+        formData.append('widget_id', id);
         const loading = root.querySelector('.pdf-loading');
         const empty = root.querySelector('.pdf-empty');
         if (empty) empty.classList.add('hidden');

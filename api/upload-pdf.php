@@ -1,8 +1,14 @@
 <?php
 session_start();
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 header('Content-Type: application/json');
+
+// Kontrollera att anroparen har åtkomst till widgetens whiteboard
+$db = new Database();
+$pdo = $db->getConnection();
+require_widget_access($pdo, $_POST['widget_id'] ?? 0);
 
 // Kontrollera att en fil har laddats upp
 if (!isset($_FILES['pdf'])) {

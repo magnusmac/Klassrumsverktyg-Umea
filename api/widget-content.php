@@ -1,18 +1,17 @@
 <?php
 session_start();
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 header('Content-Type: text/html');
 
 $type = $_GET['type'] ?? '';
 $id = $_GET['id'] ?? '';
 
-// Get widget data from database
+// Get widget data from database (kontrollerar även åtkomst)
 $db = new Database();
 $pdo = $db->getConnection();
-$stmt = $pdo->prepare("SELECT * FROM widgets WHERE id = ?");
-$stmt->execute([$id]);
-$widget = $stmt->fetch();
+$widget = require_widget_access($pdo, $id);
 $whiteboard = ['id' => $widget['whiteboard_id']];
 
 $settings = json_decode($widget['settings'] ?? '{}', true) ?? [];
@@ -107,6 +106,15 @@ function toEmbedUrl($url) {
     // Lägg till protokoll om det saknas
     if (!preg_match('#^https?://#i', $url)) {
         $url = 'https://' . $url;
+    }
+
+    // Släpp bara igenom riktiga http(s)-adresser med giltig värd –
+    // stoppar t.ex. javascript:- och data:-URL:er i iframe-src.
+    $parts = parse_url($url);
+    if ($parts === false
+        || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)
+        || empty($parts['host'])) {
+        return '';
     }
     return $url;
 }

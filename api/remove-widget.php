@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 // Sätt rätt headers
 header('Content-Type: application/json');
@@ -24,7 +25,9 @@ if (!isset($data['widget_id'])) {
 try {
     $db = new Database();
     $pdo = $db->getConnection();
-    
+
+    require_widget_access($pdo, $data['widget_id']);
+
     // Starta transaktion
     $pdo->beginTransaction();
     
@@ -59,6 +62,7 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+    error_log('remove-widget: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Databasfel']);
 }

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 header('Content-Type: application/json');
 
@@ -8,7 +9,9 @@ $pdo = $db->getConnection();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    $data = json_decode(file_get_contents('php://input'), true);
-   
+
+   require_board_access($pdo, $data['whiteboard_id'] ?? 0);
+
    $defaultSettings = [
        'clock' => [],
        'timer' => ['minutes' => 5],
