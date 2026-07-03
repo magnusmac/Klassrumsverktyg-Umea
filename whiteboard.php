@@ -1268,6 +1268,24 @@ body.dragging .widget * {
                 <span class="text-xs">PDF</span>
             </button>
 
+            <button onclick="addWidget('namewheel')"
+                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-white shadow-sm hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                <i data-lucide="shuffle" class="h-5 w-5 mb-1 text-blue-500"></i>
+                <span class="text-xs">Namnsnurra</span>
+            </button>
+
+            <button onclick="addWidget('dice')"
+                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-white shadow-sm hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                <i data-lucide="dices" class="h-5 w-5 mb-1 text-blue-500"></i>
+                <span class="text-xs">Tärning</span>
+            </button>
+
+            <button onclick="addWidget('stopwatch')"
+                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-white shadow-sm hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                <i data-lucide="watch" class="h-5 w-5 mb-1 text-blue-500"></i>
+                <span class="text-xs">Stoppur</span>
+            </button>
+
         </div>
 
         
@@ -1578,7 +1596,13 @@ function loadWidgetContent(widget) {
                 else if (widget.type === 'pdf') {
                     setTimeout(() => initPdfWidget(widget.id), 50);
                 }
-                
+                else if (widget.type === 'namewheel') {
+                    setTimeout(() => initNameWheel(widget.id), 50);
+                }
+                else if (widget.type === 'dice') {
+                    setTimeout(() => initDice(widget.id), 50);
+                }
+
                 // Update widget scaling after content is loaded
                 setTimeout(() => updateWidgetScaling(widgetElement), 50);
             }
@@ -6503,6 +6527,336 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// ============================================================
+// Namnsnurra
+// ============================================================
+window.nameWheels = window.nameWheels || {};
+
+const NAMEWHEEL_COLORS = ['#f43f5e', '#f97316', '#facc15', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+function initNameWheel(id) {
+    const root = document.getElementById(`namewheel-widget-${id}`);
+    if (!root) return;
+    const names = (root.getAttribute('data-names') || '')
+        .split('\n').map(s => s.trim()).filter(Boolean);
+    window.nameWheels[id] = { names, angle: -Math.PI / 2, spinning: false };
+    nameWheelResize(id);
+    const wrap = root.querySelector('.namewheel-canvas-wrap');
+    if (wrap && 'ResizeObserver' in window && !root.dataset.observed) {
+        root.dataset.observed = '1';
+        new ResizeObserver(() => nameWheelResize(id)).observe(wrap);
+    }
+}
+
+function nameWheelResize(id) {
+    const root = document.getElementById(`namewheel-widget-${id}`);
+    if (!root) return;
+    const wrap = root.querySelector('.namewheel-canvas-wrap');
+    const canvas = root.querySelector('.namewheel-canvas');
+    if (!wrap || !canvas) return;
+    const size = Math.max(50, Math.min(wrap.clientWidth, wrap.clientHeight));
+    canvas.width = size;
+    canvas.height = size;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    canvas.style.left = ((wrap.clientWidth - size) / 2) + 'px';
+    canvas.style.top = ((wrap.clientHeight - size) / 2) + 'px';
+    canvas.style.right = 'auto';
+    canvas.style.bottom = 'auto';
+    nameWheelDraw(id);
+}
+
+function nameWheelDraw(id) {
+    const root = document.getElementById(`namewheel-widget-${id}`);
+    const state = window.nameWheels[id];
+    if (!root || !state) return;
+    const canvas = root.querySelector('.namewheel-canvas');
+    const ctx = canvas.getContext('2d');
+    const size = canvas.width;
+    const c = size / 2;
+    const radius = c - 8;
+    ctx.clearRect(0, 0, size, size);
+    const n = state.names.length;
+    if (!n) return;
+
+    const seg = (Math.PI * 2) / n;
+    for (let i = 0; i < n; i++) {
+        const a0 = state.angle + i * seg;
+        ctx.beginPath();
+        ctx.moveTo(c, c);
+        ctx.arc(c, c, radius, a0, a0 + seg);
+        ctx.closePath();
+        ctx.fillStyle = NAMEWHEEL_COLORS[i % NAMEWHEEL_COLORS.length];
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Namn längs segmentets mittlinje
+        ctx.save();
+        ctx.translate(c, c);
+        ctx.rotate(a0 + seg / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        const fontSize = Math.max(9, Math.min(16, radius / 7, (seg * radius) * 0.5));
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        let label = state.names[i];
+        const maxWidth = radius - 24;
+        while (label.length > 2 && ctx.measureText(label).width > maxWidth) {
+            label = label.slice(0, -2) + '…';
+        }
+        ctx.fillText(label, radius - 10, 0);
+        ctx.restore();
+    }
+
+    // Nav
+    ctx.beginPath();
+    ctx.arc(c, c, Math.max(6, radius * 0.08), 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#d1d5db';
+    ctx.stroke();
+
+    // Pil (pekare) överst
+    ctx.beginPath();
+    ctx.moveTo(c - 10, 2);
+    ctx.lineTo(c + 10, 2);
+    ctx.lineTo(c, 22);
+    ctx.closePath();
+    ctx.fillStyle = '#374151';
+    ctx.fill();
+}
+
+function nameWheelSpin(id) {
+    const root = document.getElementById(`namewheel-widget-${id}`);
+    const state = window.nameWheels[id];
+    if (!root || !state || state.spinning) return;
+    if (!state.names.length) { nameWheelEdit(id); return; }
+
+    state.spinning = true;
+    const resultEl = root.querySelector('.namewheel-result');
+    if (resultEl) resultEl.textContent = '';
+
+    const start = state.angle;
+    const target = start + Math.PI * 2 * (4 + Math.random() * 3);
+    const duration = 3500;
+    const t0 = performance.now();
+
+    function frame(now) {
+        const t = Math.min(1, (now - t0) / duration);
+        const ease = 1 - Math.pow(1 - t, 3);
+        state.angle = start + (target - start) * ease;
+        nameWheelDraw(id);
+        if (t < 1) {
+            requestAnimationFrame(frame);
+        } else {
+            state.spinning = false;
+            const n = state.names.length;
+            const seg = (Math.PI * 2) / n;
+            // Pekaren sitter rakt uppåt (-90°); räkna ut vilket segment som ligger där
+            const a = ((-Math.PI / 2 - state.angle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+            const idx = Math.floor(a / seg) % n;
+            if (resultEl) resultEl.textContent = '🎉 ' + state.names[idx];
+        }
+    }
+    requestAnimationFrame(frame);
+}
+
+function nameWheelEdit(id) {
+    const root = document.getElementById(`namewheel-widget-${id}`);
+    const state = window.nameWheels[id] || { names: [] };
+    const current = state.names ? state.names.join('\n') : '';
+
+    let modal = document.getElementById('namewheel-edit-modal');
+    if (modal) modal.remove();
+
+    modal = document.createElement('div');
+    modal.id = 'namewheel-edit-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-bold mb-2">Redigera namn</h3>
+            <p class="text-sm text-gray-500 mb-3">Ett namn per rad.</p>
+            <textarea id="namewheel-edit-textarea" rows="10"
+                class="w-full border border-gray-300 rounded-lg p-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                placeholder="Anna&#10;Bruno&#10;Cesar"></textarea>
+            <div class="flex justify-end gap-2 mt-4">
+                <button id="namewheel-edit-cancel" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Avbryt</button>
+                <button id="namewheel-edit-save" class="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600">Spara</button>
+            </div>
+        </div>`;
+    // Läggs i fullscreen-elementet om aktivt, annars body
+    (document.fullscreenElement || document.body).appendChild(modal);
+
+    const textarea = modal.querySelector('#namewheel-edit-textarea');
+    textarea.value = current;
+    textarea.focus();
+
+    modal.querySelector('#namewheel-edit-cancel').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    modal.querySelector('#namewheel-edit-save').onclick = () => {
+        const names = textarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+        modal.remove();
+        if (root) {
+            root.setAttribute('data-names', names.join('\n'));
+            root.querySelector('.namewheel-empty')?.classList.toggle('hidden', names.length > 0);
+            root.querySelector('.namewheel-spin-btn')?.classList.toggle('hidden', names.length === 0);
+            const resultEl = root.querySelector('.namewheel-result');
+            if (resultEl) resultEl.textContent = '';
+        }
+        window.nameWheels[id] = { names, angle: -Math.PI / 2, spinning: false };
+        nameWheelDraw(id);
+        updateWidgetSettings(id, { names: names.join('\n') });
+    };
+}
+
+// ============================================================
+// Tärning
+// ============================================================
+function initDice(id) {
+    diceRender(id, null);
+}
+
+function diceRender(id, values) {
+    const root = document.getElementById(`dice-widget-${id}`);
+    if (!root) return;
+    const row = root.querySelector('.dice-row');
+    const count = parseInt(root.getAttribute('data-count')) || 2;
+    row.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const div = document.createElement('div');
+        div.className = 'w-16 h-16 rounded-xl border-2 border-gray-300 bg-white shadow-md flex items-center justify-center text-3xl font-bold text-gray-800';
+        div.textContent = values ? values[i] : '?';
+        row.appendChild(div);
+    }
+    const total = root.querySelector('.dice-total');
+    if (total) {
+        total.textContent = (values && count > 1)
+            ? 'Summa: ' + values.reduce((a, b) => a + b, 0)
+            : '';
+    }
+}
+
+function diceRoll(id) {
+    const root = document.getElementById(`dice-widget-${id}`);
+    if (!root || root.dataset.rolling) return;
+    root.dataset.rolling = '1';
+    const count = parseInt(root.getAttribute('data-count')) || 2;
+    const sides = parseInt(root.getAttribute('data-sides')) || 6;
+    let ticks = 10;
+    const interval = setInterval(() => {
+        const values = Array.from({ length: count }, () => 1 + Math.floor(Math.random() * sides));
+        diceRender(id, values);
+        if (--ticks <= 0) {
+            clearInterval(interval);
+            delete root.dataset.rolling;
+        }
+    }, 80);
+}
+
+function diceSetOption(id, key, value) {
+    const root = document.getElementById(`dice-widget-${id}`);
+    if (!root) return;
+    root.setAttribute('data-' + key, value);
+    diceRender(id, null);
+    updateWidgetSettings(id, { [key]: parseInt(value) });
+}
+
+// ============================================================
+// Stoppur
+// ============================================================
+window.stopwatches = window.stopwatches || {};
+
+function stopwatchState(id) {
+    return window.stopwatches[id] || (window.stopwatches[id] = {
+        elapsed: 0, running: false, startedAt: 0, timer: null, laps: []
+    });
+}
+
+function stopwatchNow(id) {
+    const s = stopwatchState(id);
+    return s.elapsed + (s.running ? Date.now() - s.startedAt : 0);
+}
+
+function stopwatchFormat(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    const tenths = Math.floor((ms % 1000) / 100);
+    return {
+        main: String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0'),
+        tenths: '.' + tenths
+    };
+}
+
+function stopwatchRender(id) {
+    const root = document.getElementById(`stopwatch-widget-${id}`);
+    if (!root) return;
+    const t = stopwatchFormat(stopwatchNow(id));
+    const display = root.querySelector('.stopwatch-display');
+    if (display) {
+        display.innerHTML = t.main + '<span class="text-2xl text-gray-500">' + t.tenths + '</span>';
+    }
+}
+
+function stopwatchToggle(id) {
+    const s = stopwatchState(id);
+    const root = document.getElementById(`stopwatch-widget-${id}`);
+    const btn = root?.querySelector('.stopwatch-toggle');
+    if (s.running) {
+        s.elapsed += Date.now() - s.startedAt;
+        s.running = false;
+        clearInterval(s.timer);
+        s.timer = null;
+        if (btn) {
+            btn.textContent = 'Starta';
+            btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        }
+    } else {
+        s.startedAt = Date.now();
+        s.running = true;
+        s.timer = setInterval(() => stopwatchRender(id), 100);
+        if (btn) {
+            btn.textContent = 'Paus';
+            btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            btn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+        }
+    }
+    stopwatchRender(id);
+}
+
+function stopwatchLap(id) {
+    const s = stopwatchState(id);
+    const now = stopwatchNow(id);
+    if (now === 0) return;
+    s.laps.push(now);
+    const root = document.getElementById(`stopwatch-widget-${id}`);
+    const list = root?.querySelector('.stopwatch-laps');
+    if (list) {
+        list.innerHTML = s.laps.map((ms, i) => {
+            const t = stopwatchFormat(ms);
+            return `<li>Varv ${i + 1}: ${t.main}${t.tenths}</li>`;
+        }).reverse().join('');
+    }
+}
+
+function stopwatchReset(id) {
+    const s = stopwatchState(id);
+    if (s.timer) clearInterval(s.timer);
+    window.stopwatches[id] = { elapsed: 0, running: false, startedAt: 0, timer: null, laps: [] };
+    const root = document.getElementById(`stopwatch-widget-${id}`);
+    const btn = root?.querySelector('.stopwatch-toggle');
+    if (btn) {
+        btn.textContent = 'Starta';
+        btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+        btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+    }
+    const list = root?.querySelector('.stopwatch-laps');
+    if (list) list.innerHTML = '';
+    stopwatchRender(id);
+}
 </script>
 <script src="/assets/js/center-widgets.js"></script>
 </body>

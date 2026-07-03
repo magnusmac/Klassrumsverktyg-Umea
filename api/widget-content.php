@@ -33,8 +33,11 @@ function outputWidgetWrapper($type, $id, $content, $extraControls = '') {
         'trafficlight' => 'bg-purple-500',
         'poll' => 'bg-indigo-500',
         'image' => 'bg-indigo-500',
-        'embed' => 'bg-teal-500',
-        'pdf' => 'bg-orange-500',
+        'embed' => 'bg-indigo-500',
+        'pdf' => 'bg-purple-500',
+        'namewheel' => 'bg-pink-500',
+        'dice' => 'bg-green-500',
+        'stopwatch' => 'bg-blue-500',
         'default' => 'bg-gray-500'
     ];
     
@@ -53,12 +56,15 @@ function outputWidgetWrapper($type, $id, $content, $extraControls = '') {
         'image' => 'Bild',
         'embed' => 'Inbäddning',
         'pdf' => 'PDF',
+        'namewheel' => 'Namnsnurra',
+        'dice' => 'Tärning',
+        'stopwatch' => 'Stoppur',
         'default' => 'Widget'
     ];
     
     $bgColor = $bgColors[$baseType] ?? $bgColors['default'];
     $displayName = $swedishNames[$baseType] ?? $swedishNames['default'];
-    $innerClasses = in_array($baseType, ['timer', 'embed', 'pdf'])
+    $innerClasses = in_array($baseType, ['timer', 'embed', 'pdf', 'namewheel', 'dice', 'stopwatch'])
         ? 'h-full w-full flex'
         : 'h-full w-full flex items-center justify-center';
     
@@ -843,7 +849,7 @@ break;
                                         <line x1="12" y1="17" x2="12" y2="21"></line>
                                     </svg>
                                     <span class="mb-3">Klistra in en länk till t.ex. en Google Presentation</span>
-                                    <button onclick="saveEmbedUrl(' . $id . ')" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 flex items-center gap-2">
+                                    <button onclick="saveEmbedUrl(' . $id . ')" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 flex items-center gap-2">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                         Ange länk
                                     </button>
@@ -919,6 +925,81 @@ break;
                             </div>';
 
                         outputWidgetWrapper('pdf', $id, $content, $extraControls);
+                        break;
+
+                    case 'namewheel':
+                        $names = $settings['names'] ?? '';
+                        $hasNames = trim($names) !== '';
+
+                        $extraControls = '
+                            <button onclick="nameWheelEdit(' . $id . ')" class="text-white hover:text-blue-200 touch-manipulation" title="Redigera namn">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </button>';
+
+                        $content = '
+                            <div class="namewheel-widget w-full h-full flex flex-col items-center p-2" id="namewheel-widget-' . $id . '" data-names="' . htmlspecialchars($names) . '">
+                                <div class="namewheel-result text-xl font-bold text-pink-600 h-8 mb-1 truncate max-w-full"></div>
+                                <div class="namewheel-canvas-wrap flex-1 w-full relative min-h-0">
+                                    <canvas class="namewheel-canvas" style="position:absolute; inset:0;"></canvas>
+                                    <div class="namewheel-empty ' . ($hasNames ? 'hidden' : '') . ' absolute inset-0 flex flex-col items-center justify-center text-center text-gray-400 p-4">
+                                        <span class="mb-3">Lägg till namn för att kunna snurra</span>
+                                        <button onclick="nameWheelEdit(' . $id . ')" class="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600">Lägg till namn</button>
+                                    </div>
+                                </div>
+                                <button onclick="nameWheelSpin(' . $id . ')" class="namewheel-spin-btn mt-2 px-8 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-medium ' . ($hasNames ? '' : 'hidden') . '">Snurra!</button>
+                            </div>';
+
+                        outputWidgetWrapper('namewheel', $id, $content, $extraControls);
+                        break;
+
+                    case 'dice':
+                        $diceCount = max(1, min(3, (int) ($settings['count'] ?? 2)));
+                        $diceSides = (int) ($settings['sides'] ?? 6);
+                        if (!in_array($diceSides, [4, 6, 8, 10, 12, 20], true)) { $diceSides = 6; }
+
+                        $countOptions = '';
+                        for ($i = 1; $i <= 3; $i++) {
+                            $countOptions .= '<option value="' . $i . '"' . ($i === $diceCount ? ' selected' : '') . '>' . $i . '</option>';
+                        }
+                        $sidesOptions = '';
+                        foreach ([4, 6, 8, 10, 12, 20] as $s) {
+                            $sidesOptions .= '<option value="' . $s . '"' . ($s === $diceSides ? ' selected' : '') . '>' . $s . '</option>';
+                        }
+
+                        $content = '
+                            <div class="dice-widget w-full h-full flex flex-col items-center justify-center p-2 gap-3" id="dice-widget-' . $id . '" data-count="' . $diceCount . '" data-sides="' . $diceSides . '">
+                                <div class="dice-row flex gap-3 items-center justify-center flex-wrap"></div>
+                                <div class="dice-total text-sm text-gray-500 h-5"></div>
+                                <button onclick="diceRoll(' . $id . ')" class="px-8 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium">Kasta!</button>
+                                <div class="flex items-center gap-3 text-xs text-gray-500">
+                                    <label class="flex items-center gap-1">Antal:
+                                        <select onchange="diceSetOption(' . $id . ', \'count\', this.value)" class="border border-gray-300 rounded p-0.5">' . $countOptions . '</select>
+                                    </label>
+                                    <label class="flex items-center gap-1">Sidor:
+                                        <select onchange="diceSetOption(' . $id . ', \'sides\', this.value)" class="border border-gray-300 rounded p-0.5">' . $sidesOptions . '</select>
+                                    </label>
+                                </div>
+                            </div>';
+
+                        outputWidgetWrapper('dice', $id, $content);
+                        break;
+
+                    case 'stopwatch':
+                        $content = '
+                            <div class="stopwatch-widget w-full h-full flex flex-col items-center justify-center p-2 gap-3" id="stopwatch-widget-' . $id . '">
+                                <div class="stopwatch-display font-mono font-bold text-5xl text-gray-800">00:00<span class="text-2xl text-gray-500">.0</span></div>
+                                <div class="flex gap-2">
+                                    <button onclick="stopwatchToggle(' . $id . ')" class="stopwatch-toggle px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium">Starta</button>
+                                    <button onclick="stopwatchLap(' . $id . ')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Varv</button>
+                                    <button onclick="stopwatchReset(' . $id . ')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Nollställ</button>
+                                </div>
+                                <ol class="stopwatch-laps text-xs text-gray-500 overflow-auto max-h-20 w-full text-center list-none"></ol>
+                            </div>';
+
+                        outputWidgetWrapper('stopwatch', $id, $content);
                         break;
 
                     default:

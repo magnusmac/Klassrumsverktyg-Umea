@@ -19,7 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
        'groups' => ['names' => '', 'groupCount' => 2],
        'brainbreak' => ['lastActivity' => ''],
        'embed' => ['url' => ''],
-       'pdf' => ['pdfUrl' => '', 'annotations' => (object)[]]
+       'pdf' => ['pdfUrl' => '', 'annotations' => (object)[]],
+       'namewheel' => ['names' => ''],
+       'dice' => ['count' => 2, 'sides' => 6],
+       'stopwatch' => []
    ];
 
    $settings = $defaultSettings[$data['type']] ?? [];
@@ -28,7 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    $defaultSizes = [
        'groups' => [300, 250],
        'embed' => [480, 360],
-       'pdf' => [520, 680]
+       'pdf' => [520, 680],
+       'namewheel' => [360, 430],
+       'dice' => [300, 300],
+       'stopwatch' => [320, 300]
    ];
    $size_w = $defaultSizes[$data['type']][0] ?? ($data['size_w'] ?? 200);
    $size_h = $defaultSizes[$data['type']][1] ?? ($data['size_h'] ?? 200);
