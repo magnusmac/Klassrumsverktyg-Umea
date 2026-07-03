@@ -18,6 +18,8 @@ services:
       MYSQL_DATABASE: klassrum
     volumes:
       - db_data:/var/lib/mysql
+      # Skapar tabeller + admin-konto automatiskt vid första uppstart
+      - ./install/docker-init:/docker-entrypoint-initdb.d:ro
 
 volumes:
   db_data:

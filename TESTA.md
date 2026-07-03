@@ -1,95 +1,90 @@
-# Testa appen lokalt – steg för steg
+# Testa appen – steg för steg
 
-Den här guiden gör så att du kan köra hela Klassrumsverktyg på din egen dator
-för att testa de nya widgetarna (Inbäddning och PDF). Du behöver **inte**
-installera PHP eller MySQL själv – allt körs via Docker.
+Det finns två sätt att testa Klassrumsverktyg utan att installera PHP
+eller MySQL själv: **GitHub Codespaces** (helt i webbläsaren, inget
+installeras på datorn) eller **Docker Desktop** (på din egen dator).
 
----
-
-## 1. Installera Docker Desktop (görs en gång)
-
-1. Gå till https://www.docker.com/products/docker-desktop/
-2. Ladda ner och installera **Docker Desktop** för din dator (Windows eller Mac).
-3. Starta Docker Desktop och vänta tills den säger att den är igång
-   (en liten val-symbol uppe i hörnet blir grön/stabil).
+I båda fallen räcker det med **ett kommando**: `bash starta.sh`
 
 ---
 
-## 2. Starta appen
+## Alternativ A: GitHub Codespaces (rekommenderas på jobbdator)
 
-1. Öppna en **terminal**:
-   - **Windows:** öppna "PowerShell"
-   - **Mac:** öppna "Terminal"
-2. Gå till mappen där koden ligger. Exempel:
+1. Gå till repot på GitHub → klicka på gröna knappen **`<> Code`**
+   → fliken **Codespaces** → **Create codespace**.
+2. Vänta tills VS Code öppnats i webbläsaren (~2 min första gången).
+3. Öppna terminalen (**View → Terminal** eller `Ctrl + ö`) och kör:
    ```
-   cd sökväg/till/Klassrumsverktyg-Umea
+   git checkout claude/repo-development-9d6mr1
+   bash starta.sh
    ```
-3. Skriv detta kommando och tryck Enter:
-   ```
-   docker compose up
-   ```
-4. Första gången tar det några minuter (den laddar ner och bygger allt).
-   När det står något i stil med *"Apache ... resuming normal operations"*
-   är appen igång. **Låt fönstret vara öppet** medan du testar.
+4. Vänta tills det står *"Apache ... resuming normal operations"*.
+5. Klicka på fliken **PORTS** längst ner → klicka på 🌐-ikonen vid
+   port **8080** → appen öppnas i en ny flik.
+6. Logga in med:
+
+   | Fält      | Värde               |
+   |-----------|---------------------|
+   | E-post    | `admin@klassrum.se` |
+   | Lösenord  | `admin123`          |
+
+> **Obs:** En Codespace är tillfällig. Skapar du en ny senare är det
+> bara att köra samma två kommandon igen – databasen med admin-kontot
+> skapas automatiskt.
 
 ---
 
-## 3. Installera databasen (görs en gång)
+## Alternativ B: Docker Desktop på egen dator
 
-1. Öppna webbläsaren och gå till:
+1. Installera **Docker Desktop** från
+   https://www.docker.com/products/docker-desktop/ och starta det.
+2. Öppna en terminal (PowerShell på Windows) i projektmappen och kör:
    ```
-   http://localhost:8080/install/install.php
+   bash starta.sh
    ```
-2. Fyll i installationsformuläret med **exakt** dessa värden:
-
-   | Fält              | Värde         |
-   |-------------------|---------------|
-   | Databas-host      | `db`          |
-   | Databasnamn       | `klassrum`    |
-   | Databasanvändare  | `root`        |
-   | Lösenord          | `klassrum123` |
-
-3. Slutför installationen (skapa även en admin-användare när du blir ombedd –
-   kom ihåg e-post och lösenord du väljer).
+   *(Fungerar inte `bash` i PowerShell? Kör `wsl bash starta.sh`
+   eller använd Git Bash.)*
+3. Öppna http://localhost:8080 och logga in som ovan.
 
 ---
 
-## 4. Logga in och testa widgetarna
+## Testa widgetarna
 
-1. Gå till `http://localhost:8080/` och logga in med admin-kontot du skapade.
-2. Skapa eller öppna en **whiteboard**.
-3. I sidofältet under **WIDGETS**, testa:
+Skapa eller öppna en **whiteboard** och testa i sidofältet under
+**WIDGETS**:
 
-   **Inbäddning**
-   - Klicka på "Inbäddning"
-   - Klicka på pennan/redigera-ikonen i widgetens namnlist
-   - Klistra in en länk till en Google Presentation → den ska visas direkt
+**Inbäddning** – klicka på "Ange länk" och klistra in en länk till en
+Google Presentation → den visas direkt i widgeten.
 
-   **PDF**
-   - Klicka på "PDF"
-   - Klicka på upp-ikonen (⬆) i namnlisten och välj en PDF-fil
-   - Testa verktygen: **penna**, **markeringspenna**, **text** (klicka på sidan),
-     **sudd**, färgerna och pilarna för att bläddra mellan sidor
-   - **Ladda om sidan** i webbläsaren – dina anteckningar ska finnas kvar
+**PDF** – klicka på "Ladda upp" i verktygslisten och välj en PDF.
+Testa **penna**, **markeringspenna**, **text** (klicka på sidan),
+**sudd**, färgerna och pilarna för att bläddra. Ladda om sidan –
+anteckningarna ska finnas kvar.
+
+**Namnsnurra** – klicka på "Lägg till namn", skriv ett namn per rad,
+spara och klicka **Snurra!**
+
+**Tärning** – välj antal tärningar och sidor, klicka **Kasta!**
+
+**Stoppur** – starta, ta varvtider, nollställ.
 
 ---
 
-## 5. Stänga av
+## Stänga av / börja om
 
-I terminalfönstret: tryck `Ctrl + C`.
-Vill du städa bort allt (inklusive databasen) kör du:
+Stäng av: `Ctrl + C` i terminalen.
+
+Börja om från noll (raderar databasen):
 ```
 docker compose down -v
+rm src/Config/Database.php
+bash starta.sh
 ```
-
----
 
 ## Vanliga frågor
 
-**"Det står att port 8080 redan används"**
-Ändra `"8080:80"` i `docker-compose.yml` till t.ex. `"8090:80"` och använd
-`http://localhost:8090/` istället.
+**"Port 8080 används redan"** – ändra `"8080:80"` i
+`docker-compose.yml` till t.ex. `"8090:80"` och använd port 8090.
 
-**Jag vill börja om från noll**
-Kör `docker compose down -v` och ta bort filen `src/Config/Database.php`.
-Starta sedan om från steg 2.
+**Ingen 🌐-ikon vid porten i Codespaces?** – vänta tills Apache-raden
+synts i terminalen och kolla igen under fliken PORTS.
