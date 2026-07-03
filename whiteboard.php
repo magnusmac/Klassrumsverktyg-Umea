@@ -382,6 +382,36 @@ $stmt->execute([$whiteboard['id']]);
         .widget[data-type="embed"] .widget-scaling-container,
         .widget[data-type="pdf"] .widget-scaling-container { padding: 0; align-items: stretch; }
 
+        /* ===== Tavelläge – större knappar och pekytor för smartboards ===== */
+        body.board-mode .widget-header { padding: 0.75rem 1rem; }
+        body.board-mode .widget-header svg { width: 1.75rem; height: 1.75rem; }
+        body.board-mode .widget-header button { padding: 0.25rem; font-size: 1.5rem; line-height: 1; }
+        body.board-mode .widget-header span { font-size: 1.15rem; }
+
+        body.board-mode .pdf-toolbar { gap: 0.5rem; padding: 0.5rem; }
+        body.board-mode .pdf-toolbar button { padding: 0.55rem; }
+        body.board-mode .pdf-toolbar svg { width: 1.6rem; height: 1.6rem; }
+        body.board-mode .pdf-color-btn { width: 2.4rem !important; height: 2.4rem !important; }
+        body.board-mode .pdf-page-indicator { font-size: 1.05rem; min-width: 4rem; }
+
+        body.board-mode .namewheel-widget button,
+        body.board-mode .dice-widget button,
+        body.board-mode .embed-container button {
+            font-size: 1.3rem;
+            padding: 0.8rem 2rem;
+        }
+        body.board-mode .stopwatch-widget button {
+            font-size: 1.15rem;
+            padding: 0.7rem 1.1rem;
+        }
+        body.board-mode .stopwatch-widget .flex { flex-wrap: wrap; justify-content: center; }
+        body.board-mode .dice-widget select { font-size: 1.2rem; padding: 0.4rem 0.6rem; }
+        body.board-mode .dice-widget label { font-size: 1.05rem; }
+        body.board-mode .stopwatch-laps { font-size: 1rem; max-height: 8rem; }
+
+        body.board-mode .timer-controls button { padding: 0.6rem 1rem; }
+        body.board-mode #boardModeToggle { background-color: #2563eb; color: #ffffff; }
+
         .timer-digit-container {
             display: inline-block;
             text-align: center;
@@ -1150,11 +1180,19 @@ body.dragging .widget * {
         aria-label="Toggle Sidebar">
         <i data-lucide="menu" class="h-6 w-6"></i>
     </button>
-    <button 
+    <button
         id="fullscreenToggle"
         class="fixed top-4 right-4 z-50 bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition-colors"
         aria-label="Toggle Fullscreen">
         <i data-lucide="maximize" class="h-6 w-6"></i>
+    </button>
+    <button
+        id="boardModeToggle"
+        onclick="toggleBoardMode()"
+        class="fixed top-4 right-16 z-50 bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        aria-label="Tavelläge (större knappar för pekskärm)"
+        title="Tavelläge – större knappar för pekskärm/smartboard">
+        <i data-lucide="hand" class="h-6 w-6"></i>
     </button>
 
     <!-- Overlay -->
@@ -6526,6 +6564,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 250);
     });
 });
+
+// ============================================================
+// Tavelläge – större knappar för pekskärmar/smartboards
+// ============================================================
+function toggleBoardMode() {
+    const on = document.body.classList.toggle('board-mode');
+    try { localStorage.setItem('boardMode', on ? '1' : '0'); } catch (e) {}
+}
+
+// Återställ sparat läge direkt vid sidladdning
+try {
+    if (localStorage.getItem('boardMode') === '1') {
+        document.body.classList.add('board-mode');
+    }
+} catch (e) {}
 
 // ============================================================
 // Namnsnurra
