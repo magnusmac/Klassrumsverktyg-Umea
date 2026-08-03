@@ -38,8 +38,18 @@ mkdir -p assets/uploads/pdfs
 
 # 3. Starta allt (databasen initieras automatiskt första gången)
 echo ""
-echo "Startar Klassrumsverktyg på http://localhost:8080"
+echo "Startar Klassrumsverktyg på port 8080"
 echo "Logga in med: admin@klassrum.se / admin123"
 echo "Avsluta med Ctrl+C."
 echo ""
-docker compose up
+
+# Nyare Docker har "docker compose", äldre har "docker-compose"
+if docker compose version >/dev/null 2>&1; then
+    docker compose up
+elif command -v docker-compose >/dev/null 2>&1; then
+    docker-compose up
+else
+    echo "FEL: hittar varken 'docker compose' eller 'docker-compose'."
+    echo "Installera Docker Desktop, eller kör i GitHub Codespaces/Google Cloud Shell."
+    exit 1
+fi
