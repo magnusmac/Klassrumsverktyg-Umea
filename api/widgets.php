@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 header('Content-Type: application/json');
 
@@ -8,20 +9,35 @@ $pdo = $db->getConnection();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    $data = json_decode(file_get_contents('php://input'), true);
-   
+
+   require_board_access($pdo, $data['whiteboard_id'] ?? 0);
+
    $defaultSettings = [
        'clock' => [],
        'timer' => ['minutes' => 5],
        'text' => ['content' => ''],
        'groups' => ['names' => '', 'groupCount' => 2],
-       'brainbreak' => ['lastActivity' => '']
+       'brainbreak' => ['lastActivity' => ''],
+       'embed' => ['url' => ''],
+       'pdf' => ['pdfUrl' => '', 'annotations' => (object)[]],
+       'namewheel' => ['names' => ''],
+       'dice' => ['count' => 2, 'sides' => 6],
+       'stopwatch' => []
    ];
-   
+
    $settings = $defaultSettings[$data['type']] ?? [];
-   
+
    // Sätt standardstorlekar baserat på widget-typ
-   $size_w = $data['type'] === 'groups' ? 300 : ($data['size_w'] ?? 200);
-   $size_h = $data['type'] === 'groups' ? 250 : ($data['size_h'] ?? 200);
+   $defaultSizes = [
+       'groups' => [300, 250],
+       'embed' => [480, 360],
+       'pdf' => [520, 680],
+       'namewheel' => [360, 430],
+       'dice' => [300, 300],
+       'stopwatch' => [320, 300]
+   ];
+   $size_w = $defaultSizes[$data['type']][0] ?? ($data['size_w'] ?? 200);
+   $size_h = $defaultSizes[$data['type']][1] ?? ($data['size_h'] ?? 200);
    
    $stmt = $pdo->prepare("
        INSERT INTO widgets (

@@ -52,8 +52,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MFA – Min säkerhet</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="/assets/vendor/fontawesome/all.min.css">
+<script src="/assets/vendor/qrcodejs/qrcode.min.js"></script>
 </head><body class="bg-gray-100 min-h-screen">
 <?php include_once __DIR__ . '/nav.php'; ?>
 <div class="container mx-auto px-4 py-8">

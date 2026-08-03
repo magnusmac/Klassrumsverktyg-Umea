@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 header('Content-Type: application/json');
 
@@ -15,17 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     
-    // Hämta befintliga inställningar
-    $stmt = $pdo->prepare("SELECT settings FROM widgets WHERE id = ?");
-    $stmt->execute([$data['widget_id']]);
-    $widget = $stmt->fetch();
-    
-    if (!$widget) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Widget not found']);
-        exit;
-    }
-    
+    // Hämta befintliga inställningar (kontrollerar även åtkomst)
+    $widget = require_widget_access($pdo, $data['widget_id']);
+
     // Slå samman befintliga och nya inställningar
     $currentSettings = json_decode($widget['settings'] ?? '{}', true) ?? [];
     $newSettings = array_merge($currentSettings, $data['settings']);
@@ -42,8 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([json_encode($newSettings), $data['widget_id']]);
         echo json_encode(['success' => true, 'settings' => $newSettings]);
     } catch (PDOException $e) {
+        error_log('update-widget-settings: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'error' => 'Databasfel']);
     }
 } else {
     http_response_code(405);

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../src/Config/Database.php';
+require_once __DIR__ . '/board-access.php';
 
 header('Content-Type: application/json');
 
@@ -21,7 +22,9 @@ if (!isset($data['widget_id']) || !isset($data['size_w']) || !isset($data['size_
 try {
     $db = new Database();
     $pdo = $db->getConnection();
-    
+
+    require_widget_access($pdo, $data['widget_id']);
+
     $stmt = $pdo->prepare("UPDATE widgets SET size_w = ?, size_h = ?, updated_at = NOW() WHERE id = ?");
     $result = $stmt->execute([
         $data['size_w'],
