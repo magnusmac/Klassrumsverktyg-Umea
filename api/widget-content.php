@@ -92,6 +92,27 @@ function toEmbedUrl($url) {
         return '';
     }
 
+    // Google-länkar finns i två former som måste hanteras var för sig:
+    //   1. Vanlig fil-länk:        /presentation/d/{filId}/edit
+    //   2. "Publicera på webben":  /presentation/d/e/{token}/pub
+    // De publicerade måste testas först, annars fångar det generella
+    // mönstret bara bokstaven "e" och bygger en trasig adress.
+
+    // --- Publicerade länkar (/d/e/{token}/...) ---
+    if (preg_match('#docs\.google\.com/presentation/d/e/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/presentation/d/e/' . $m[1] . '/embed?start=false&loop=false&delayms=3000';
+    }
+    if (preg_match('#docs\.google\.com/document/d/e/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/document/d/e/' . $m[1] . '/pub?embedded=true';
+    }
+    if (preg_match('#docs\.google\.com/spreadsheets/d/e/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/spreadsheets/d/e/' . $m[1] . '/pubhtml?widget=true&headers=false';
+    }
+    if (preg_match('#docs\.google\.com/forms/d/e/([a-zA-Z0-9_-]+)#', $url, $m)) {
+        return 'https://docs.google.com/forms/d/e/' . $m[1] . '/viewform?embedded=true';
+    }
+
+    // --- Vanliga fil-länkar (/d/{filId}/...) ---
     // Google Presentationer -> /embed
     if (preg_match('#docs\.google\.com/presentation/d/([a-zA-Z0-9_-]+)#', $url, $m)) {
         return 'https://docs.google.com/presentation/d/' . $m[1] . '/embed?start=false&loop=false&delayms=3000';
