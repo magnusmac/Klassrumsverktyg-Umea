@@ -1,0 +1,1599 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Mattetavlan</title>
+<style>
+/* ============================================================
+   Tokens — skolverktygsdesign, apparatläge
+   ============================================================ */
+:root {
+  --sv-yta-0: #F4F3EF;
+  --sv-yta-1: #FAF9F6;
+  --sv-yta-2: #FFFFFF;
+  --sv-text: #1A1A18;
+  --sv-text-sekundar: #5F5E5A;
+  --sv-text-dampad: #8A8880;
+  --sv-linje: rgba(26, 26, 24, 0.14);
+  --sv-linje-stark: rgba(26, 26, 24, 0.28);
+
+  --sv-id-teal: #9FE1CB;
+  --sv-id-teal-text: #04342C;
+  --sv-id-amber: #FAC775;
+  --sv-id-amber-text: #412402;
+  --sv-id-bla: #B5D4F4;
+  --sv-id-bla-text: #042C53;
+  --sv-id-korall: #F5C4B3;
+  --sv-id-korall-text: #4A1B0C;
+  --sv-id-lila: #CECBF6;
+  --sv-id-lila-text: #26215C;
+
+  --sv-signal-fel: #A32D2D;
+  --sv-signal-fel-yta: #FCEBEB;
+  --sv-signal-klart: #3B6D11;
+  --sv-signal-klart-yta: #EAF3DE;
+  --sv-signal-varning: #854F0B;
+  --sv-signal-varning-yta: #FAEEDA;
+
+  --sv-app-yta: #1A1A18;
+  --sv-app-text: #F2F0EA;
+  --sv-app-dampad: #8A8880;
+  --sv-app-linje: #4A4844;
+  --sv-app-inaktiv: #3A3936;
+  --sv-app-accent: #FF5A1F;
+  --sv-app-accent-text: #2B1005;
+
+  --sv-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sv-mono: ui-monospace, "SF Mono", "Roboto Mono", Menlo, monospace;
+
+  --sv-steg-1: 8px;
+  --sv-steg-2: 12px;
+  --sv-steg-3: 16px;
+  --sv-steg-4: 24px;
+  --sv-steg-5: 32px;
+
+  --sv-radie: 8px;
+  --sv-radie-kort: 12px;
+  --sv-harlinje: 0.5px;
+  --sv-tryckyta: 44px;
+
+  /* sätts om per vy */
+  --id: var(--sv-id-teal);
+  --id-text: var(--sv-id-teal-text);
+  --skala: 1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--sv-yta-0);
+  color: var(--sv-text);
+  font-family: var(--sv-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-weight: 500; line-height: 1.3; margin: 0; }
+
+button, input, select { font-family: inherit; color: inherit; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--sv-app-accent); outline-offset: 2px; }
+
+.ram {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--sv-steg-2) var(--sv-steg-2) var(--sv-steg-4);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-steg-1);
+}
+
+/* ============================================================
+   Chassi — den mörka plattan med all styrning
+   ============================================================ */
+.chassi {
+  background: var(--sv-app-yta);
+  color: var(--sv-app-text);
+  border-radius: var(--sv-radie-kort);
+  padding: var(--sv-steg-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sv-steg-2);
+  font-family: var(--sv-mono);
+}
+.chassi__id {
+  display: flex;
+  flex-direction: column;
+  padding-right: var(--sv-steg-2);
+  min-width: 0;
+}
+.chassi__namn {
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+}
+.chassi__modell {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--sv-app-dampad);
+}
+.valjare {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sv-steg-1);
+  flex: 1;
+  min-width: 0;
+}
+.flik {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-steg-1);
+  min-height: var(--sv-tryckyta);
+  padding: 0 var(--sv-steg-2);
+  background: transparent;
+  border: var(--sv-harlinje) solid var(--sv-app-linje);
+  border-radius: var(--sv-radie);
+  color: var(--sv-app-text);
+  font-family: var(--sv-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.flik:hover { background: var(--sv-app-inaktiv); }
+.flik:active { transform: scale(0.98); }
+.flik__nr {
+  font-size: 11px;
+  color: var(--sv-app-dampad);
+  font-variant-numeric: tabular-nums;
+}
+.flik[aria-selected="true"] {
+  background: var(--id);
+  border-color: transparent;
+  color: var(--id-text);
+}
+.flik[aria-selected="true"] .flik__nr { color: var(--id-text); opacity: 0.7; }
+.flik[data-vy="tallinje"] { --id: var(--sv-id-teal);   --id-text: var(--sv-id-teal-text); }
+.flik[data-vy="brak"]     { --id: var(--sv-id-amber);  --id-text: var(--sv-id-amber-text); }
+.flik[data-vy="talbild"]  { --id: var(--sv-id-bla);    --id-text: var(--sv-id-bla-text); }
+.flik[data-vy="rakna"]    { --id: var(--sv-id-korall); --id-text: var(--sv-id-korall-text); }
+.flik[data-vy="slumpa"]   { --id: var(--sv-id-lila);   --id-text: var(--sv-id-lila-text); }
+
+.krom { display: flex; gap: var(--sv-steg-1); margin-left: auto; }
+.krom__knapp {
+  min-width: var(--sv-tryckyta);
+  min-height: var(--sv-tryckyta);
+  padding: 0 var(--sv-steg-2);
+  background: transparent;
+  border: var(--sv-harlinje) solid var(--sv-app-linje);
+  border-radius: var(--sv-radie);
+  color: var(--sv-app-text);
+  font-family: var(--sv-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.krom__knapp:hover { background: var(--sv-app-inaktiv); }
+.krom__knapp:active { transform: scale(0.98); }
+.krom__knapp[disabled] { color: var(--sv-app-dampad); cursor: default; }
+.krom__knapp[disabled]:hover { background: transparent; }
+
+/* ============================================================
+   Scen — den ljusa displayen
+   ============================================================ */
+.scen {
+  flex: 1;
+  font-size: calc(16px * var(--skala));
+}
+.vy { display: none; }
+.vy[data-aktiv="true"] { display: block; }
+.vy[data-vy="tallinje"] { --id: var(--sv-id-teal);   --id-text: var(--sv-id-teal-text); }
+.vy[data-vy="brak"]     { --id: var(--sv-id-amber);  --id-text: var(--sv-id-amber-text); }
+.vy[data-vy="talbild"]  { --id: var(--sv-id-bla);    --id-text: var(--sv-id-bla-text); }
+.vy[data-vy="rakna"]    { --id: var(--sv-id-korall); --id-text: var(--sv-id-korall-text); }
+.vy[data-vy="slumpa"]   { --id: var(--sv-id-lila);   --id-text: var(--sv-id-lila-text); }
+
+.panel {
+  background: var(--sv-yta-2);
+  border: var(--sv-harlinje) solid var(--sv-linje);
+  border-radius: var(--sv-radie-kort);
+  overflow: hidden;
+}
+.panel__list {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-steg-2);
+  padding: var(--sv-steg-1) var(--sv-steg-3);
+  background: var(--id);
+  color: var(--id-text);
+}
+.panel__list h2 {
+  font-family: var(--sv-mono);
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+  font-weight: 400;
+}
+.panel__list .notis { color: var(--id-text); opacity: 0.75; margin-left: auto; }
+
+.kontroller {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sv-steg-2);
+  padding: var(--sv-steg-3);
+  border-bottom: var(--sv-harlinje) solid var(--sv-linje);
+}
+.display {
+  padding: var(--sv-steg-4) var(--sv-steg-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sv-steg-3);
+}
+
+/* ============================================================
+   Kontroller
+   ============================================================ */
+.falt { display: flex; flex-direction: column; gap: 4px; }
+.falt__etikett {
+  font-family: var(--sv-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--sv-text-dampad);
+}
+.falt input[type="number"] {
+  width: 6.5em;
+  min-height: var(--sv-tryckyta);
+  padding: 0 var(--sv-steg-2);
+  background: var(--sv-yta-1);
+  border: var(--sv-harlinje) solid var(--sv-linje-stark);
+  border-radius: var(--sv-radie);
+  font-family: var(--sv-mono);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.knapp {
+  min-height: var(--sv-tryckyta);
+  padding: 0 var(--sv-steg-3);
+  background: transparent;
+  border: var(--sv-harlinje) solid var(--sv-linje-stark);
+  border-radius: var(--sv-radie);
+  color: var(--sv-text);
+  font-family: var(--sv-mono);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 120ms ease;
+  white-space: nowrap;
+}
+.knapp:hover { background: var(--sv-yta-1); }
+.knapp:active { transform: scale(0.98); }
+.knapp--primar {
+  background: var(--sv-app-accent);
+  border-color: transparent;
+  color: var(--sv-app-accent-text);
+  font-weight: 500;
+}
+.knapp--primar:hover { background: var(--sv-app-accent); filter: brightness(1.06); }
+.knapp--stor { min-height: 56px; font-size: 17px; padding: 0 var(--sv-steg-4); }
+.knapp[aria-pressed="true"] {
+  background: var(--sv-text);
+  border-color: transparent;
+  color: var(--sv-yta-2);
+}
+.knapp[disabled] { color: var(--sv-text-dampad); border-color: var(--sv-linje); cursor: default; }
+.knapp[disabled]:hover { background: transparent; }
+.knapp--kvadrat { width: var(--sv-tryckyta); padding: 0; font-size: 20px; }
+.knapp--avlasning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  color: var(--sv-text-sekundar);
+  cursor: default;
+}
+
+.grupp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.grupp--tat { gap: 2px; }
+
+/* ============================================================
+   Piktogram
+   ============================================================ */
+.pikt {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  flex: none;
+}
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ============================================================
+   Tallinje
+   ============================================================ */
+.linje { width: 100%; height: auto; display: block; }
+.linje .axel { stroke: var(--sv-text); stroke-width: 2.5; }
+.linje .streck-stor { stroke: var(--sv-text); stroke-width: 2.5; }
+.linje .streck-liten { stroke: var(--sv-text-dampad); stroke-width: 1.5; }
+.linje .etikett {
+  fill: var(--sv-text);
+  font-family: var(--sv-mono);
+  font-size: 20px;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+.linje .traff { fill: var(--id); stroke: var(--sv-text); stroke-width: 2; cursor: pointer; }
+.linje .traff-text {
+  fill: var(--sv-text);
+  font-family: var(--sv-mono);
+  font-size: 22px;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+.linje .hopp { stroke: var(--sv-text); stroke-width: 2.5; fill: none; }
+.linje .hopp-text {
+  fill: var(--sv-text);
+  font-family: var(--sv-mono);
+  font-size: 22px;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+.linje__yta { cursor: crosshair; }
+
+/* ============================================================
+   Bråk
+   ============================================================ */
+.brakpar {
+  --figur: clamp(180px, 22vw, 300px);
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: start;
+  justify-items: center;
+  justify-content: center;
+  gap: var(--sv-steg-4);
+  width: 100%;
+}
+.brak { display: flex; flex-direction: column; align-items: center; gap: var(--sv-steg-2); }
+.brak__figur { width: var(--figur); height: auto; }
+.brak__figur .del { fill: var(--sv-yta-1); stroke: var(--sv-text); stroke-width: 2; }
+.brak__figur .del--fylld { fill: var(--id); }
+.brak__tal {
+  font-family: var(--sv-mono);
+  font-size: 2.6em;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.brak__tal .strecket {
+  display: block;
+  border-top: 3px solid var(--sv-text);
+  margin: 4px 0;
+}
+.brak__form { display: flex; align-items: center; gap: var(--sv-steg-2); }
+.brak__vard {
+  font-family: var(--sv-mono);
+  font-size: 14px;
+  color: var(--sv-text-sekundar);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.7em;
+}
+.brak__jmf {
+  font-family: var(--sv-mono);
+  font-size: 3.4em;
+  line-height: 1;
+  min-width: 1.4em;
+  text-align: center;
+  /* i höjd med cirklarnas mitt, inte mitt i hela kolumnen.
+     Marginal, inte transform — en transform gör boxen hög nog
+     att lägga sig över knapparna i kontrollraden. */
+  margin: calc(var(--figur) / 2 - 0.5em) 0 0;
+  pointer-events: none;
+}
+.brak__jmf[data-dold="true"] { color: var(--sv-text-dampad); }
+
+/* ============================================================
+   Talbild
+   ============================================================ */
+.talbild { width: 100%; max-width: 660px; max-height: 44vh; }
+.talbild .ruta { fill: var(--sv-yta-1); stroke: var(--sv-linje-stark); stroke-width: 1; cursor: pointer; }
+.talbild .ruta--fylld { fill: var(--id); }
+.talbild .ram5 { fill: none; stroke: var(--sv-text); stroke-width: 2.5; }
+.stortal {
+  font-family: var(--sv-mono);
+  font-size: 4em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+.stortal[data-dold="true"] { color: var(--sv-text-dampad); }
+
+/* ============================================================
+   Räkna
+   ============================================================ */
+.uppgift {
+  font-family: var(--sv-mono);
+  font-size: 5em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+  text-align: center;
+  word-break: break-word;
+}
+.uppgift__svar { color: var(--sv-text-dampad); }
+.uppgift__svar[data-visat="true"] { color: var(--sv-text); }
+
+/* ============================================================
+   Slumpa
+   ============================================================ */
+.tarningar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sv-steg-3);
+}
+.tarning { width: clamp(96px, 14vw, 200px); height: auto; }
+.tarning .kropp { fill: var(--sv-yta-1); stroke: var(--sv-text); stroke-width: 2.5; }
+.tarning .prick { fill: var(--sv-text); }
+.tarning .siffra {
+  fill: var(--sv-text);
+  font-family: var(--sv-mono);
+  font-size: 46px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.summa {
+  font-family: var(--sv-mono);
+  font-size: 14px;
+  color: var(--sv-text-sekundar);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Mikrocopy och fot
+   ============================================================ */
+.notis {
+  font-family: var(--sv-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sv-text-dampad);
+  margin: 0;
+}
+.notis--fel { color: var(--sv-signal-fel); }
+.hjalp {
+  font-size: 13px;
+  color: var(--sv-text-sekundar);
+  margin: 0;
+  text-align: center;
+  max-width: 52ch;
+}
+.fot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sv-steg-2);
+  justify-content: space-between;
+  padding: var(--sv-steg-2) var(--sv-steg-3);
+}
+
+@media (max-width: 720px) {
+  .chassi { flex-direction: column; align-items: stretch; }
+  .brakpar { grid-template-columns: 1fr; }
+  .brak__jmf { margin-top: 0; }
+  .krom { margin-left: 0; }
+  .uppgift { font-size: 3em; }
+  .stortal { font-size: 2.6em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+@media print {
+  .chassi, .kontroller, .fot { display: none; }
+  .panel { border: none; }
+}
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="p-tallinje" viewBox="0 0 20 20"><path d="M2 13h16M6 9v8M11 9v8M16 9v8"/></symbol>
+  <symbol id="p-brak" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M2.5 10h15"/></symbol>
+  <symbol id="p-talbild" viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="6.5" height="6.5"/><rect x="11" y="2.5" width="6.5" height="6.5"/><rect x="2.5" y="11" width="6.5" height="6.5"/><rect x="11" y="11" width="6.5" height="6.5"/></symbol>
+  <symbol id="p-rakna" viewBox="0 0 20 20"><path d="M2.5 6.5h7M6 3v7M10.5 14h7M10.5 17.5h7"/></symbol>
+  <symbol id="p-slumpa" viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="15" height="15" rx="2.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="13.5" cy="13.5" r="1.1" fill="currentColor" stroke="none"/></symbol>
+</svg>
+
+<div class="ram">
+
+  <header class="chassi">
+    <div class="chassi__id">
+      <span class="chassi__namn">mattetavlan</span>
+      <span class="chassi__modell">modell 01 — för projektor och tavla</span>
+    </div>
+
+    <nav class="valjare" id="valjare" role="tablist" aria-label="Verktyg"></nav>
+
+    <div class="krom">
+      <button class="krom__knapp" id="mindre" title="Mindre text">A−</button>
+      <button class="krom__knapp" id="storre" title="Större text">A+</button>
+      <button class="krom__knapp" id="helskarm">helskärm</button>
+    </div>
+  </header>
+
+  <main class="scen" id="scen">
+
+    <!-- ============ 01 TALLINJE ============ -->
+    <section class="vy" data-vy="tallinje" role="tabpanel" aria-labelledby="flik-tallinje">
+      <div class="panel">
+        <div class="panel__list">
+          <svg class="pikt" aria-hidden="true"><use href="#p-tallinje"></use></svg>
+          <h2>tallinje</h2>
+          <p class="notis" id="tl-notis">klicka på linjen för att sätta ut ett tal</p>
+        </div>
+
+        <div class="kontroller">
+          <div class="falt">
+            <span class="falt__etikett">färdiga linjer</span>
+            <div class="grupp" id="tl-snabbval"></div>
+          </div>
+          <label class="falt">
+            <span class="falt__etikett">från</span>
+            <input type="number" id="tl-fran" value="0" step="any">
+          </label>
+          <label class="falt">
+            <span class="falt__etikett">till</span>
+            <input type="number" id="tl-till" value="10" step="any">
+          </label>
+          <label class="falt">
+            <span class="falt__etikett">steg</span>
+            <input type="number" id="tl-steg" value="1" step="any" min="0">
+          </label>
+          <div class="falt">
+            <span class="falt__etikett">delstreck</span>
+            <div class="grupp grupp--tat">
+              <button class="knapp knapp--kvadrat" id="tl-del-ner" aria-label="Färre delstreck">−</button>
+              <span class="knapp knapp--kvadrat knapp--avlasning" id="tl-del-vard" role="status">0</span>
+              <button class="knapp knapp--kvadrat" id="tl-del-upp" aria-label="Fler delstreck">+</button>
+            </div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">visa siffror</span>
+            <div class="grupp" id="tl-etiketter"></div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">utsatta tal</span>
+            <div class="grupp">
+              <button class="knapp knapp--primar" id="tl-slumpa">slumpa tal</button>
+              <button class="knapp" id="tl-rensa">rensa</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="display">
+          <svg class="linje" id="tl-svg" viewBox="0 0 1000 260" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Tallinje"></svg>
+          <p class="hjalp">Sätt ut två tal så ritas hoppet mellan dem ut. Klicka på ett utsatt tal för att ta bort det.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 02 BRÅK ============ -->
+    <section class="vy" data-vy="brak" role="tabpanel" aria-labelledby="flik-brak">
+      <div class="panel">
+        <div class="panel__list">
+          <svg class="pikt" aria-hidden="true"><use href="#p-brak"></use></svg>
+          <h2>bråk</h2>
+          <p class="notis">två bråk att jämföra</p>
+        </div>
+
+        <div class="kontroller">
+          <div class="falt">
+            <span class="falt__etikett">form</span>
+            <div class="grupp" id="br-form"></div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">under figuren</span>
+            <div class="grupp">
+              <button class="knapp" id="br-varden" aria-pressed="false">visa decimal och procent</button>
+            </div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">jämförelse</span>
+            <div class="grupp">
+              <button class="knapp knapp--primar" id="br-jmf">visa tecknet</button>
+              <button class="knapp" id="br-slumpa">slumpa båda</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="display">
+          <div class="brakpar">
+            <div class="brak" data-brak="a">
+              <svg class="brak__figur" viewBox="0 0 200 200" role="img" aria-label="Bråk A"></svg>
+              <div class="brak__form">
+                <div class="grupp grupp--tat">
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="a" data-del="taljare" data-riktning="-1" aria-label="Minska täljare i A">−</button>
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="a" data-del="taljare" data-riktning="1" aria-label="Öka täljare i A">+</button>
+                </div>
+                <p class="brak__tal"><span class="brak__t">1</span><span class="strecket"></span><span class="brak__n">2</span></p>
+                <div class="grupp grupp--tat">
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="a" data-del="namnare" data-riktning="-1" aria-label="Minska nämnare i A">−</button>
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="a" data-del="namnare" data-riktning="1" aria-label="Öka nämnare i A">+</button>
+                </div>
+              </div>
+              <p class="brak__vard"></p>
+            </div>
+
+            <p class="brak__jmf" id="br-tecken" data-dold="true">?</p>
+
+            <div class="brak" data-brak="b">
+              <svg class="brak__figur" viewBox="0 0 200 200" role="img" aria-label="Bråk B"></svg>
+              <div class="brak__form">
+                <div class="grupp grupp--tat">
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="b" data-del="taljare" data-riktning="-1" aria-label="Minska täljare i B">−</button>
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="b" data-del="taljare" data-riktning="1" aria-label="Öka täljare i B">+</button>
+                </div>
+                <p class="brak__tal"><span class="brak__t">1</span><span class="strecket"></span><span class="brak__n">3</span></p>
+                <div class="grupp grupp--tat">
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="b" data-del="namnare" data-riktning="-1" aria-label="Minska nämnare i B">−</button>
+                  <button class="knapp knapp--kvadrat" data-brak-knapp="b" data-del="namnare" data-riktning="1" aria-label="Öka nämnare i B">+</button>
+                </div>
+              </div>
+              <p class="brak__vard"></p>
+            </div>
+          </div>
+          <p class="hjalp">Låt klassen gissa tecknet innan du visar det. Nämnaren går från 1 till 24.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03 TALBILD ============ -->
+    <section class="vy" data-vy="talbild" role="tabpanel" aria-labelledby="flik-talbild">
+      <div class="panel">
+        <div class="panel__list">
+          <svg class="pikt" aria-hidden="true"><use href="#p-talbild"></use></svg>
+          <h2>talbild</h2>
+          <p class="notis">klicka i rutnätet för att fylla upp till en ruta</p>
+        </div>
+
+        <div class="kontroller">
+          <div class="falt">
+            <span class="falt__etikett">form</span>
+            <div class="grupp" id="tb-form"></div>
+          </div>
+          <label class="falt">
+            <span class="falt__etikett">antal</span>
+            <input type="number" id="tb-antal" value="7" min="0" max="100" step="1">
+          </label>
+          <div class="falt">
+            <span class="falt__etikett">talet</span>
+            <div class="grupp">
+              <button class="knapp" id="tb-visa" aria-pressed="true">visa siffran</button>
+            </div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">nytt tal</span>
+            <div class="grupp">
+              <button class="knapp knapp--primar" id="tb-slumpa">slumpa antal</button>
+              <button class="knapp" id="tb-noll">nollställ</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="display">
+          <p class="stortal" id="tb-tal">7</p>
+          <svg class="talbild" id="tb-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Talbild"></svg>
+          <p class="hjalp">Tioramen visar tiokompisar. Hundrarutan visar tiotal och ental, med kraftigare linjer var femte ruta.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 04 RÄKNA ============ -->
+    <section class="vy" data-vy="rakna" role="tabpanel" aria-labelledby="flik-rakna">
+      <div class="panel">
+        <div class="panel__list">
+          <svg class="pikt" aria-hidden="true"><use href="#p-rakna"></use></svg>
+          <h2>räkna</h2>
+          <p class="notis">en uppgift i taget, tillräckligt stor för sista bänkraden</p>
+        </div>
+
+        <div class="kontroller">
+          <div class="falt">
+            <span class="falt__etikett">räknesätt</span>
+            <div class="grupp" id="rk-satt"></div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">talområde</span>
+            <div class="grupp" id="rk-omrade"></div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">tabeller för gånger och delat</span>
+            <div class="grupp grupp--tat" id="rk-tabeller"></div>
+          </div>
+          <div class="falt">
+            <span class="falt__etikett">uppgift</span>
+            <div class="grupp">
+              <button class="knapp knapp--primar knapp--stor" id="rk-ny">ny uppgift</button>
+              <button class="knapp knapp--stor" id="rk-svar">visa svar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="display">
+          <p class="uppgift" id="rk-uppgift">7 × 8 = <span class="uppgift__svar" id="rk-varde">?</span></p>
+          <p class="notis" id="rk-notis"></p>
+          <p class="hjalp">Subtraktion ger aldrig negativa svar och division går alltid jämnt upp.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 05 SLUMPA ============ -->
+    <section class="vy" data-vy="slumpa" role="tabpanel" aria-labelledby="flik-slumpa">
+      <div class="panel">
+        <div class="panel__list">
+          <svg class="pikt" aria-hidden="true"><use href="#p-slumpa"></use></svg>
+          <h2>slumpa</h2>
+          <p class="notis">tärningar eller ett tal i ett intervall</p>
+        </div>
+
+        <div class="kontroller">
+          <div class="falt">
+            <span class="falt__etikett">vad</span>
+            <div class="grupp" id="sl-lage"></div>
+          </div>
+          <div class="falt" data-visas-vid="tarning">
+            <span class="falt__etikett">antal tärningar</span>
+            <div class="grupp grupp--tat" id="sl-antal"></div>
+          </div>
+          <div class="falt" data-visas-vid="tarning">
+            <span class="falt__etikett">sidor</span>
+            <div class="grupp grupp--tat" id="sl-sidor"></div>
+          </div>
+          <label class="falt" data-visas-vid="tal">
+            <span class="falt__etikett">minst</span>
+            <input type="number" id="sl-min" value="1" step="1">
+          </label>
+          <label class="falt" data-visas-vid="tal">
+            <span class="falt__etikett">högst</span>
+            <input type="number" id="sl-max" value="100" step="1">
+          </label>
+          <div class="falt">
+            <span class="falt__etikett">dra</span>
+            <div class="grupp">
+              <button class="knapp knapp--primar knapp--stor" id="sl-dra">slumpa</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="display">
+          <div class="tarningar" id="sl-tarningar"></div>
+          <p class="stortal" id="sl-tal" hidden>–</p>
+          <p class="summa" id="sl-summa"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="fot">
+    <p class="notis">Allt räknas i webbläsaren. Inga konton, inga elevuppgifter, ingenting lämnar datorn.</p>
+    <p class="notis">Siffertangenterna 1–5 byter verktyg. Mellanslag drar ett nytt tal eller en ny uppgift.</p>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const NYCKEL = "mattetavlan.v1";
+  const slump = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+  const klam = (v, min, max) => Math.min(max, Math.max(min, v));
+  const svg = (namn, attr) => {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", namn);
+    for (const k in attr) el.setAttribute(k, attr[k]);
+    return el;
+  };
+  /* Avrundning som slipper 0.30000000000000004 på tallinjen,
+     med svenskt decimaltecken och riktigt minustecken. */
+  const snyggt = v => {
+    const r = Math.round(v * 1e9) / 1e9;
+    return String(r).replace(".", ",").replace(/^-/, "\u2212");
+  };
+
+  /* ====================================================================
+     Verktygsväljare
+     ==================================================================== */
+  const VERKTYG = [
+    { id: "tallinje", namn: "tallinje", pikt: "p-tallinje" },
+    { id: "brak",     namn: "bråk",     pikt: "p-brak" },
+    { id: "talbild",  namn: "talbild",  pikt: "p-talbild" },
+    { id: "rakna",    namn: "räkna",    pikt: "p-rakna" },
+    { id: "slumpa",   namn: "slumpa",   pikt: "p-slumpa" }
+  ];
+
+  let aktivVy = VERKTYG[0].id;
+  let skala = 1;
+
+  function byggValjare() {
+    const nav = $("#valjare");
+    VERKTYG.forEach((v, i) => {
+      const b = document.createElement("button");
+      b.className = "flik";
+      b.id = "flik-" + v.id;
+      b.dataset.vy = v.id;
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", "false");
+      b.innerHTML = '<span class="flik__nr">0' + (i + 1) + '</span>' +
+        '<svg class="pikt" aria-hidden="true"><use href="#' + v.pikt + '"></use></svg>' +
+        '<span>' + v.namn + '</span>';
+      b.addEventListener("click", () => visa(v.id));
+      nav.appendChild(b);
+    });
+  }
+
+  function visa(id) {
+    aktivVy = id;
+    $$(".flik").forEach(f => f.setAttribute("aria-selected", String(f.dataset.vy === id)));
+    $$(".vy").forEach(v => v.dataset.aktiv = String(v.dataset.vy === id));
+    spara();
+  }
+
+  /* ====================================================================
+     Textskala och helskärm
+     ==================================================================== */
+  function sattSkala(ny) {
+    skala = klam(Math.round(ny * 10) / 10, 0.8, 2);
+    document.documentElement.style.setProperty("--skala", skala);
+    $("#mindre").disabled = skala <= 0.8;
+    $("#storre").disabled = skala >= 2;
+    spara();
+  }
+  $("#mindre").addEventListener("click", () => sattSkala(skala - 0.1));
+  $("#storre").addEventListener("click", () => sattSkala(skala + 0.1));
+  $("#helskarm").addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  });
+  document.addEventListener("fullscreenchange", () => {
+    $("#helskarm").textContent = document.fullscreenElement ? "avsluta" : "helskärm";
+  });
+
+  /* ====================================================================
+     01 TALLINJE
+     ==================================================================== */
+  const STRECK_TAK = 220; /* så många streck ryms innan de smetar ihop */
+  const tl = {
+    fran: 0, till: 10, steg: 1, del: 0, etiketter: "alla", punkter: []
+  };
+  const TL_SNABBVAL = [
+    { namn: "0–10",    fran: 0,   till: 10,   steg: 1,   del: 0 },
+    { namn: "0–20",    fran: 0,   till: 20,   steg: 1,   del: 0 },
+    { namn: "0–100",   fran: 0,   till: 100,  steg: 10,  del: 9 },
+    { namn: "0–1000",  fran: 0,   till: 1000, steg: 100, del: 9 },
+    { namn: "−10–10",  fran: -10, till: 10,   steg: 1,   del: 0 },
+    { namn: "0–1",     fran: 0,   till: 1,    steg: 0.1, del: 0 }
+  ];
+  const TL_ETIKETTER = [
+    { id: "alla",     namn: "alla" },
+    { id: "varannan", namn: "varannan" },
+    { id: "inga",     namn: "inga" }
+  ];
+
+  function tlAntalStreck(o) {
+    const spann = o.till - o.fran;
+    if (!(spann > 0) || !(o.steg > 0)) return Infinity;
+    return Math.round(spann / o.steg) * (o.del + 1) + 1;
+  }
+
+  function tlByggKontroller() {
+    const snabb = $("#tl-snabbval");
+    TL_SNABBVAL.forEach(s => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.textContent = s.namn;
+      b.addEventListener("click", () => {
+        Object.assign(tl, { fran: s.fran, till: s.till, steg: s.steg, del: s.del, punkter: [] });
+        tlSyncFalt();
+        tlRita();
+      });
+      snabb.appendChild(b);
+    });
+
+    const etik = $("#tl-etiketter");
+    TL_ETIKETTER.forEach(e => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.dataset.etikett = e.id;
+      b.textContent = e.namn;
+      b.addEventListener("click", () => { tl.etiketter = e.id; tlSyncFalt(); tlRita(); });
+      etik.appendChild(b);
+    });
+
+    ["tl-fran", "tl-till", "tl-steg"].forEach(id => {
+      $("#" + id).addEventListener("change", () => {
+        const f = parseFloat($("#tl-fran").value);
+        const t = parseFloat($("#tl-till").value);
+        const s = parseFloat($("#tl-steg").value);
+        if (Number.isFinite(f)) tl.fran = f;
+        if (Number.isFinite(t)) tl.till = t;
+        if (Number.isFinite(s) && s > 0) tl.steg = s;
+        tl.punkter = tl.punkter.filter(p => p >= tl.fran && p <= tl.till);
+        tlSyncFalt();
+        tlRita();
+      });
+    });
+
+    $("#tl-del-ner").addEventListener("click", () => {
+      if (tl.del <= 0) return;
+      tl.del--;
+      tlNotis("");
+      tlSyncFalt();
+      tlRita();
+    });
+
+    /* Enda lekmomentet i verktyget: maxläget på delstrecken.
+       Utan det vore trycket dött och läraren fick ingen förklaring. */
+    $("#tl-del-upp").addEventListener("click", () => {
+      const prov = Object.assign({}, tl, { del: tl.del + 1 });
+      if (tl.del >= 9 || tlAntalStreck(prov) > STRECK_TAK) {
+        tlNotis("Fler streck ryms inte. Sista bänkraden tackar.");
+        return;
+      }
+      tl.del++;
+      tlNotis("");
+      tlSyncFalt();
+      tlRita();
+    });
+
+    $("#tl-slumpa").addEventListener("click", () => {
+      const steg = tl.steg / (tl.del + 1);
+      const antal = Math.round((tl.till - tl.fran) / steg);
+      if (!(antal > 0)) return;
+      tlLaggTill(tl.fran + slump(0, antal) * steg);
+    });
+    $("#tl-rensa").addEventListener("click", () => { tl.punkter = []; tlRita(); });
+  }
+
+  let tlNotisTimer;
+  function tlNotis(text) {
+    const el = $("#tl-notis");
+    el.textContent = text || "klicka på linjen för att sätta ut ett tal";
+    clearTimeout(tlNotisTimer);
+    if (text) tlNotisTimer = setTimeout(() => tlNotis(""), 5000);
+  }
+
+  function tlSyncFalt() {
+    $("#tl-fran").value = tl.fran;
+    $("#tl-till").value = tl.till;
+    $("#tl-steg").value = tl.steg;
+    $("#tl-del-vard").textContent = tl.del;
+    $("#tl-del-ner").disabled = tl.del <= 0;
+    $$("#tl-etiketter .knapp").forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.etikett === tl.etiketter)));
+    spara();
+  }
+
+  function tlLaggTill(varde) {
+    const v = Math.round(varde * 1e9) / 1e9;
+    if (tl.punkter.some(p => Math.abs(p - v) < 1e-9)) return;
+    tl.punkter.push(v);
+    if (tl.punkter.length > 2) tl.punkter.shift();
+    tlRita();
+  }
+
+  const TL_V = 1000, TL_H = 260, TL_MARG = 60, TL_AXEL_Y = 190;
+
+  function tlRita() {
+    const el = $("#tl-svg");
+    el.textContent = "";
+    const spann = tl.till - tl.fran;
+    if (!(spann > 0) || !(tl.steg > 0)) {
+      el.setAttribute("viewBox", "0 140 " + TL_V + " 120");
+      el.appendChild(svg("text", { x: TL_V / 2, y: TL_AXEL_Y, class: "etikett" })).textContent =
+        "Till måste vara större än från.";
+      return;
+    }
+    const bredd = TL_V - TL_MARG * 2;
+    const x = v => TL_MARG + (v - tl.fran) / spann * bredd;
+    let minY = TL_AXEL_Y - 40;
+
+    el.appendChild(svg("line", { x1: TL_MARG - 24, y1: TL_AXEL_Y, x2: TL_V - TL_MARG + 24, y2: TL_AXEL_Y, class: "axel" }));
+
+    const smaSteg = tl.steg / (tl.del + 1);
+    const antalSma = Math.round(spann / smaSteg);
+    if (antalSma <= STRECK_TAK) {
+      for (let i = 0; i <= antalSma; i++) {
+        const v = tl.fran + i * smaSteg;
+        const stor = i % (tl.del + 1) === 0;
+        el.appendChild(svg("line", {
+          x1: x(v), y1: TL_AXEL_Y - (stor ? 20 : 11),
+          x2: x(v), y2: TL_AXEL_Y + (stor ? 20 : 11),
+          class: stor ? "streck-stor" : "streck-liten"
+        }));
+        if (stor && tl.etiketter !== "inga") {
+          const nr = Math.round(i / (tl.del + 1));
+          if (tl.etiketter === "alla" || nr % 2 === 0) {
+            const t = svg("text", { x: x(v), y: TL_AXEL_Y + 52, class: "etikett" });
+            t.textContent = snyggt(v);
+            el.appendChild(t);
+          }
+        }
+      }
+    }
+
+    /* Hoppet mellan två utsatta tal */
+    if (tl.punkter.length === 2) {
+      const [a, b] = tl.punkter;
+      const xa = x(a), xb = x(b);
+      const hojd = Math.min(110, Math.max(50, Math.abs(xb - xa) / 2.4));
+      el.appendChild(svg("path", {
+        d: "M " + xa + " " + (TL_AXEL_Y - 26) +
+           " Q " + ((xa + xb) / 2) + " " + (TL_AXEL_Y - 26 - hojd * 2) +
+           " " + xb + " " + (TL_AXEL_Y - 26),
+        class: "hopp"
+      }));
+      const diff = Math.round((b - a) * 1e9) / 1e9;
+      const t = svg("text", { x: (xa + xb) / 2, y: TL_AXEL_Y - 34 - hojd, class: "hopp-text" });
+      minY = Math.min(minY, TL_AXEL_Y - 34 - hojd - 26);
+      t.textContent = (diff > 0 ? "+" : diff < 0 ? "−" : "±") + snyggt(Math.abs(diff));
+      el.appendChild(t);
+    }
+
+    /* Utsatta tal */
+    tl.punkter.forEach(v => {
+      const g = svg("g", { class: "linje__punkt" });
+      const c = svg("circle", { cx: x(v), cy: TL_AXEL_Y, r: 14, class: "traff" });
+      c.addEventListener("click", ev => {
+        ev.stopPropagation();
+        tl.punkter = tl.punkter.filter(p => p !== v);
+        tlRita();
+      });
+      const t = svg("text", { x: x(v), y: TL_AXEL_Y - 32, class: "traff-text" });
+      minY = Math.min(minY, TL_AXEL_Y - 32 - 26);
+      t.textContent = snyggt(v);
+      g.appendChild(c);
+      g.appendChild(t);
+      el.appendChild(g);
+    });
+
+    const topp = Math.max(0, Math.min(minY - 10, TL_AXEL_Y - 60));
+    el.setAttribute("viewBox", "0 " + topp + " " + TL_V + " " + (TL_H - topp));
+
+    /* Klickyta överst så hela linjen går att träffa */
+    const yta = svg("rect", { x: 0, y: topp, width: TL_V, height: TL_H - topp, fill: "transparent", class: "linje__yta" });
+    yta.addEventListener("click", ev => {
+      const r = el.getBoundingClientRect();
+      const px = (ev.clientX - r.left) / r.width * TL_V;
+      const rat = tl.fran + (px - TL_MARG) / bredd * spann;
+      if (rat < tl.fran || rat > tl.till) return;
+      tlLaggTill(Math.round(rat / smaSteg) * smaSteg);
+    });
+    el.appendChild(yta);
+    spara();
+  }
+
+  /* ====================================================================
+     02 BRÅK
+     ==================================================================== */
+  const br = { form: "cirkel", varden: false, visatTecken: false, a: { t: 1, n: 2 }, b: { t: 1, n: 3 } };
+  const BR_FORMER = [{ id: "cirkel", namn: "cirkel" }, { id: "stapel", namn: "stapel" }];
+
+  function brByggKontroller() {
+    const g = $("#br-form");
+    BR_FORMER.forEach(f => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.dataset.form = f.id;
+      b.textContent = f.namn;
+      b.addEventListener("click", () => { br.form = f.id; brRita(); });
+      g.appendChild(b);
+    });
+
+    $$("[data-brak-knapp]").forEach(b => {
+      b.addEventListener("click", () => {
+        const f = br[b.dataset.brakKnapp];
+        const r = Number(b.dataset.riktning);
+        if (b.dataset.del === "taljare") f.t = klam(f.t + r, 0, f.n);
+        else { f.n = klam(f.n + r, 1, 24); f.t = klam(f.t, 0, f.n); }
+        br.visatTecken = false;
+        brRita();
+      });
+    });
+
+    $("#br-varden").addEventListener("click", () => { br.varden = !br.varden; brRita(); });
+    $("#br-jmf").addEventListener("click", () => { br.visatTecken = !br.visatTecken; brRita(); });
+    $("#br-slumpa").addEventListener("click", () => {
+      ["a", "b"].forEach(k => {
+        br[k].n = slump(2, 12);
+        br[k].t = slump(1, br[k].n);
+      });
+      br.visatTecken = false;
+      brRita();
+    });
+  }
+
+  function brSektor(cx, cy, r, a0, a1) {
+    const p = a => [cx + r * Math.cos(a - Math.PI / 2), cy + r * Math.sin(a - Math.PI / 2)];
+    const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    const stor = (a1 - a0) > Math.PI ? 1 : 0;
+    return "M " + cx + " " + cy + " L " + x0 + " " + y0 +
+           " A " + r + " " + r + " 0 " + stor + " 1 " + x1 + " " + y1 + " Z";
+  }
+
+  function brRitaFigur(el, t, n) {
+    el.textContent = "";
+    if (br.form === "cirkel") {
+      if (n === 1) {
+        el.appendChild(svg("circle", { cx: 100, cy: 100, r: 88, class: "del" + (t >= 1 ? " del--fylld" : "") }));
+        return;
+      }
+      for (let i = 0; i < n; i++) {
+        el.appendChild(svg("path", {
+          d: brSektor(100, 100, 88, i * 2 * Math.PI / n, (i + 1) * 2 * Math.PI / n),
+          class: "del" + (i < t ? " del--fylld" : "")
+        }));
+      }
+    } else {
+      const h = 176 / n;
+      for (let i = 0; i < n; i++) {
+        el.appendChild(svg("rect", {
+          x: 32, y: 12 + i * h, width: 136, height: h,
+          class: "del" + (i < t ? " del--fylld" : "")
+        }));
+      }
+    }
+  }
+
+  function brRita() {
+    $$("#br-form .knapp").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.form === br.form)));
+    $("#br-varden").setAttribute("aria-pressed", String(br.varden));
+
+    ["a", "b"].forEach(k => {
+      const rot = $('[data-brak="' + k + '"]');
+      const f = br[k];
+      brRitaFigur($(".brak__figur", rot), f.t, f.n);
+      $(".brak__t", rot).textContent = f.t;
+      $(".brak__n", rot).textContent = f.n;
+      const kvot = f.t / f.n;
+      $(".brak__vard", rot).textContent = br.varden
+        ? snyggt(Math.round(kvot * 1000) / 1000) + "  ·  " + snyggt(Math.round(kvot * 1000) / 10) + " %"
+        : "";
+    });
+
+    const el = $("#br-tecken");
+    if (br.visatTecken) {
+      const va = br.a.t / br.a.n, vb = br.b.t / br.b.n;
+      el.textContent = Math.abs(va - vb) < 1e-9 ? "=" : (va > vb ? ">" : "<");
+      el.dataset.dold = "false";
+      $("#br-jmf").textContent = "dölj tecknet";
+    } else {
+      el.textContent = "?";
+      el.dataset.dold = "true";
+      $("#br-jmf").textContent = "visa tecknet";
+    }
+    spara();
+  }
+
+  /* ====================================================================
+     03 TALBILD
+     ==================================================================== */
+  const tb = { form: "hundra", antal: 7, visa: true };
+  const TB_FORMER = [{ id: "hundra", namn: "hundraruta" }, { id: "tioram", namn: "tioramar" }];
+
+  function tbByggKontroller() {
+    const g = $("#tb-form");
+    TB_FORMER.forEach(f => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.dataset.form = f.id;
+      b.textContent = f.namn;
+      b.addEventListener("click", () => { tb.form = f.id; tbRita(); });
+      g.appendChild(b);
+    });
+    $("#tb-antal").addEventListener("input", () => {
+      const v = parseInt($("#tb-antal").value, 10);
+      tb.antal = Number.isFinite(v) ? klam(v, 0, 100) : 0;
+      tbRita();
+    });
+    $("#tb-visa").addEventListener("click", () => { tb.visa = !tb.visa; tbRita(); });
+    $("#tb-slumpa").addEventListener("click", () => { tb.antal = slump(1, 100); tbRita(); });
+    $("#tb-noll").addEventListener("click", () => { tb.antal = 0; tbRita(); });
+  }
+
+  function tbRita() {
+    $$("#tb-form .knapp").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.form === tb.form)));
+    $("#tb-visa").setAttribute("aria-pressed", String(tb.visa));
+    $("#tb-visa").textContent = tb.visa ? "dölj siffran" : "visa siffran";
+    if ($("#tb-antal").value !== String(tb.antal)) $("#tb-antal").value = tb.antal;
+
+    const tal = $("#tb-tal");
+    tal.textContent = tb.visa ? tb.antal : "?";
+    tal.dataset.dold = String(!tb.visa);
+
+    const el = $("#tb-svg");
+    el.textContent = "";
+
+    const klicka = n => () => { tb.antal = (tb.antal === n) ? n - 1 : n; tbRita(); };
+
+    if (tb.form === "hundra") {
+      const sida = 44, x0 = 0, y0 = 0;
+      el.setAttribute("viewBox", "-2 -2 " + (sida * 10 + 4) + " " + (sida * 10 + 4));
+      for (let r = 0; r < 10; r++) {
+        for (let k = 0; k < 10; k++) {
+          const n = r * 10 + k + 1;
+          const ruta = svg("rect", {
+            x: x0 + k * sida, y: y0 + r * sida, width: sida, height: sida,
+            class: "ruta" + (n <= tb.antal ? " ruta--fylld" : "")
+          });
+          ruta.addEventListener("click", klicka(n));
+          el.appendChild(ruta);
+        }
+      }
+      /* Kraftigare linjer var femte ruta — hjälper ögat gruppera */
+      [0, 5, 10].forEach(i => {
+        el.appendChild(svg("line", { x1: x0 + i * sida, y1: y0, x2: x0 + i * sida, y2: y0 + sida * 10, class: "ram5" }));
+        el.appendChild(svg("line", { x1: x0, y1: y0 + i * sida, x2: x0 + sida * 10, y2: y0 + i * sida, class: "ram5" }));
+      });
+    } else {
+      const ramar = Math.max(1, Math.ceil(tb.antal / 10));
+      const kol = Math.min(ramar, 2);
+      const rad = Math.ceil(ramar / kol);
+      const sida = 78, luft = 34;
+      const ramB = sida * 5, ramH = sida * 2;
+      const totB = kol * ramB + (kol - 1) * luft;
+      const totH = rad * ramH + (rad - 1) * luft;
+      const x0 = 0, y0 = 0;
+      el.setAttribute("viewBox", "-2 -2 " + (totB + 4) + " " + (totH + 4));
+
+      for (let i = 0; i < ramar; i++) {
+        const rx = x0 + (i % kol) * (ramB + luft);
+        const ry = y0 + Math.floor(i / kol) * (ramH + luft);
+        for (let r = 0; r < 2; r++) {
+          for (let k = 0; k < 5; k++) {
+            const n = i * 10 + r * 5 + k + 1;
+            const ruta = svg("rect", {
+              x: rx + k * sida, y: ry + r * sida, width: sida, height: sida,
+              class: "ruta" + (n <= tb.antal ? " ruta--fylld" : "")
+            });
+            ruta.addEventListener("click", klicka(n));
+            el.appendChild(ruta);
+          }
+        }
+        el.appendChild(svg("rect", { x: rx, y: ry, width: ramB, height: ramH, class: "ram5" }));
+      }
+    }
+    spara();
+  }
+
+  /* ====================================================================
+     04 RÄKNA
+     ==================================================================== */
+  const RK_SATT = [
+    { id: "add", tecken: "+" }, { id: "sub", tecken: "−" },
+    { id: "mul", tecken: "×" }, { id: "div", tecken: "÷" }
+  ];
+  const RK_OMRADEN = [
+    { id: "liten",  namn: "till 10",  max: 10 },
+    { id: "mellan", namn: "till 20",  max: 20 },
+    { id: "stor",   namn: "till 100", max: 100 }
+  ];
+  const rk = {
+    satt: ["add"], omrade: "mellan", tabeller: [2, 3, 4, 5, 10],
+    a: 7, b: 8, tecken: "×", svar: 56, visatSvar: false
+  };
+
+  function rkByggKontroller() {
+    const gs = $("#rk-satt");
+    RK_SATT.forEach(s => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.dataset.satt = s.id;
+      b.textContent = s.tecken;
+      b.setAttribute("aria-label", { add: "addition", sub: "subtraktion", mul: "multiplikation", div: "division" }[s.id]);
+      b.addEventListener("click", () => {
+        const i = rk.satt.indexOf(s.id);
+        if (i === -1) rk.satt.push(s.id);
+        else if (rk.satt.length > 1) rk.satt.splice(i, 1);
+        else { rkNotis("Minst ett räknesätt måste vara på."); return; }
+        rkSync();
+      });
+      gs.appendChild(b);
+    });
+
+    const go = $("#rk-omrade");
+    RK_OMRADEN.forEach(o => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.dataset.omrade = o.id;
+      b.textContent = o.namn;
+      b.addEventListener("click", () => { rk.omrade = o.id; rkSync(); });
+      go.appendChild(b);
+    });
+
+    const gt = $("#rk-tabeller");
+    for (let i = 1; i <= 12; i++) {
+      const b = document.createElement("button");
+      b.className = "knapp knapp--kvadrat";
+      b.dataset.tabell = i;
+      b.textContent = i;
+      b.addEventListener("click", () => {
+        const p = rk.tabeller.indexOf(i);
+        if (p === -1) rk.tabeller.push(i);
+        else if (rk.tabeller.length > 1) rk.tabeller.splice(p, 1);
+        else { rkNotis("Minst en tabell måste vara på."); return; }
+        rkSync();
+      });
+      gt.appendChild(b);
+    }
+
+    $("#rk-ny").addEventListener("click", rkNy);
+    $("#rk-svar").addEventListener("click", () => {
+      rk.visatSvar = !rk.visatSvar;
+      rkRita();
+    });
+  }
+
+  let rkNotisTimer;
+  function rkNotis(text) {
+    const el = $("#rk-notis");
+    el.textContent = text;
+    el.className = "notis" + (text ? " notis--fel" : "");
+    clearTimeout(rkNotisTimer);
+    if (text) rkNotisTimer = setTimeout(() => rkNotis(""), 4000);
+  }
+
+  function rkSync() {
+    $$("#rk-satt .knapp").forEach(b => b.setAttribute("aria-pressed", String(rk.satt.includes(b.dataset.satt))));
+    $$("#rk-omrade .knapp").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.omrade === rk.omrade)));
+    $$("#rk-tabeller .knapp").forEach(b => b.setAttribute("aria-pressed", String(rk.tabeller.includes(Number(b.dataset.tabell)))));
+    spara();
+  }
+
+  function rkNy() {
+    const satt = rk.satt[slump(0, rk.satt.length - 1)];
+    const max = RK_OMRADEN.find(o => o.id === rk.omrade).max;
+    const tab = () => rk.tabeller[slump(0, rk.tabeller.length - 1)];
+
+    if (satt === "add") {
+      rk.a = slump(1, max); rk.b = slump(1, max);
+      rk.tecken = "+"; rk.svar = rk.a + rk.b;
+    } else if (satt === "sub") {
+      /* Aldrig negativt svar — större talet först. */
+      const x = slump(1, max), y = slump(1, max);
+      rk.a = Math.max(x, y); rk.b = Math.min(x, y);
+      rk.tecken = "−"; rk.svar = rk.a - rk.b;
+    } else if (satt === "mul") {
+      rk.a = tab(); rk.b = slump(1, 10);
+      rk.tecken = "×"; rk.svar = rk.a * rk.b;
+    } else {
+      /* Går alltid jämnt upp: bygg från svaret. */
+      const t = tab(), k = slump(1, 10);
+      rk.a = t * k; rk.b = t;
+      rk.tecken = "÷"; rk.svar = k;
+    }
+    rk.visatSvar = false;
+    rkRita();
+  }
+
+  function rkRita() {
+    $("#rk-uppgift").innerHTML = rk.a + " " + rk.tecken + " " + rk.b + " = " +
+      '<span class="uppgift__svar" id="rk-varde"></span>';
+    const el = $("#rk-varde");
+    el.textContent = rk.visatSvar ? rk.svar : "?";
+    el.dataset.visat = String(rk.visatSvar);
+    $("#rk-svar").textContent = rk.visatSvar ? "dölj svar" : "visa svar";
+    spara();
+  }
+
+  /* ====================================================================
+     05 SLUMPA
+     ==================================================================== */
+  const sl = { lage: "tarning", antal: 2, sidor: 6, min: 1, max: 100, kast: [2, 5], tal: null };
+  const SL_LAGEN = [{ id: "tarning", namn: "tärningar" }, { id: "tal", namn: "ett tal" }];
+  const SL_SIDOR = [4, 6, 8, 10, 12, 20];
+
+  function slByggKontroller() {
+    const gl = $("#sl-lage");
+    SL_LAGEN.forEach(l => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.dataset.lage = l.id;
+      b.textContent = l.namn;
+      b.addEventListener("click", () => { sl.lage = l.id; slRita(); });
+      gl.appendChild(b);
+    });
+
+    const ga = $("#sl-antal");
+    for (let i = 1; i <= 6; i++) {
+      const b = document.createElement("button");
+      b.className = "knapp knapp--kvadrat";
+      b.dataset.antal = i;
+      b.textContent = i;
+      b.addEventListener("click", () => { sl.antal = i; slDra(); });
+      ga.appendChild(b);
+    }
+
+    const gs = $("#sl-sidor");
+    SL_SIDOR.forEach(s => {
+      const b = document.createElement("button");
+      b.className = "knapp";
+      b.dataset.sidor = s;
+      b.textContent = "d" + s;
+      b.addEventListener("click", () => { sl.sidor = s; slDra(); });
+      gs.appendChild(b);
+    });
+
+    $("#sl-min").addEventListener("change", slLasIntervall);
+    $("#sl-max").addEventListener("change", slLasIntervall);
+    $("#sl-dra").addEventListener("click", slDra);
+  }
+
+  function slLasIntervall() {
+    const a = parseInt($("#sl-min").value, 10);
+    const b = parseInt($("#sl-max").value, 10);
+    if (Number.isFinite(a)) sl.min = a;
+    if (Number.isFinite(b)) sl.max = b;
+    spara();
+  }
+
+  function slDra() {
+    if (sl.lage === "tarning") {
+      sl.kast = Array.from({ length: sl.antal }, () => slump(1, sl.sidor));
+    } else {
+      if (sl.max < sl.min) { const t = sl.min; sl.min = sl.max; sl.max = t; }
+      sl.tal = slump(sl.min, sl.max);
+    }
+    slRita();
+  }
+
+  const D6_PRICKAR = {
+    1: [[50, 50]],
+    2: [[28, 28], [72, 72]],
+    3: [[28, 28], [50, 50], [72, 72]],
+    4: [[28, 28], [72, 28], [28, 72], [72, 72]],
+    5: [[28, 28], [72, 28], [50, 50], [28, 72], [72, 72]],
+    6: [[28, 26], [72, 26], [28, 50], [72, 50], [28, 74], [72, 74]]
+  };
+
+  function slRita() {
+    $$("#sl-lage .knapp").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lage === sl.lage)));
+    $$("#sl-antal .knapp").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.antal) === sl.antal)));
+    $$("#sl-sidor .knapp").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.sidor) === sl.sidor)));
+    $$("[data-visas-vid]").forEach(f => { f.hidden = f.dataset.visasVid !== sl.lage; });
+
+    $("#sl-min").value = sl.min;
+    $("#sl-max").value = sl.max;
+
+    const rutan = $("#sl-tarningar");
+    const talet = $("#sl-tal");
+    rutan.textContent = "";
+
+    if (sl.lage === "tal") {
+      rutan.hidden = true;
+      talet.hidden = false;
+      talet.textContent = sl.tal === null ? "–" : sl.tal;
+      talet.dataset.dold = String(sl.tal === null);
+      $("#sl-summa").textContent = sl.tal === null
+        ? "inget draget än"
+        : "mellan " + sl.min + " och " + sl.max;
+      spara();
+      return;
+    }
+
+    rutan.hidden = false;
+    talet.hidden = true;
+
+    sl.kast.forEach(v => {
+      const t = svg("svg", { class: "tarning", viewBox: "0 0 100 100", role: "img" });
+      const titel = svg("title");
+      titel.textContent = "Tärning som visar " + v;
+      t.appendChild(titel);
+      t.appendChild(svg("rect", { x: 6, y: 6, width: 88, height: 88, rx: 12, class: "kropp" }));
+      if (sl.sidor === 6 && D6_PRICKAR[v]) {
+        D6_PRICKAR[v].forEach(([cx, cy]) => t.appendChild(svg("circle", { cx, cy, r: 7.5, class: "prick" })));
+      } else {
+        const s = svg("text", { x: 50, y: 52, class: "siffra" });
+        s.textContent = v;
+        t.appendChild(s);
+      }
+      rutan.appendChild(t);
+    });
+
+    const summa = sl.kast.reduce((a, b) => a + b, 0);
+    $("#sl-summa").textContent = sl.kast.length > 1
+      ? "summa " + summa + "  ·  " + sl.kast.join(" + ")
+      : "d" + sl.sidor;
+    spara();
+  }
+
+  /* ====================================================================
+     Tangentbord
+     ==================================================================== */
+  document.addEventListener("keydown", ev => {
+    const iFalt = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+    if (iFalt) return;
+
+    if (ev.key >= "1" && ev.key <= "5") {
+      visa(VERKTYG[Number(ev.key) - 1].id);
+      ev.preventDefault();
+      return;
+    }
+    if (ev.key === " ") {
+      if (aktivVy === "rakna") rkNy();
+      else if (aktivVy === "slumpa") slDra();
+      else if (aktivVy === "talbild") { tb.antal = slump(1, 100); tbRita(); }
+      else if (aktivVy === "tallinje") $("#tl-slumpa").click();
+      else if (aktivVy === "brak") $("#br-slumpa").click();
+      ev.preventDefault();
+    }
+  });
+
+  /* ====================================================================
+     Sparning — bara inställningar, aldrig något om eleverna
+     ==================================================================== */
+  let sparTimer;
+  function spara() {
+    clearTimeout(sparTimer);
+    sparTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(NYCKEL, JSON.stringify({ aktivVy, skala, tl, br, tb, rk, sl }));
+      } catch (e) { /* privat läge eller full lagring — verktyget fungerar ändå */ }
+    }, 250);
+  }
+
+  function las() {
+    try {
+      const rad = localStorage.getItem(NYCKEL);
+      if (!rad) return;
+      const s = JSON.parse(rad);
+      if (s.aktivVy && VERKTYG.some(v => v.id === s.aktivVy)) aktivVy = s.aktivVy;
+      if (Number.isFinite(s.skala)) skala = klam(s.skala, 0.8, 2);
+      Object.assign(tl, s.tl || {});
+      Object.assign(br, s.br || {});
+      Object.assign(tb, s.tb || {});
+      Object.assign(rk, s.rk || {});
+      Object.assign(sl, s.sl || {});
+      if (!Array.isArray(tl.punkter)) tl.punkter = [];
+      if (!Array.isArray(rk.satt) || !rk.satt.length) rk.satt = ["add"];
+      if (!Array.isArray(rk.tabeller) || !rk.tabeller.length) rk.tabeller = [2, 3, 4, 5, 10];
+      if (!Array.isArray(sl.kast)) sl.kast = [2, 5];
+    } catch (e) { /* trasig lagring — kör på standardvärdena */ }
+  }
+
+  /* ====================================================================
+     Start
+     ==================================================================== */
+  las();
+  byggValjare();
+  tlByggKontroller();
+  brByggKontroller();
+  tbByggKontroller();
+  rkByggKontroller();
+  slByggKontroller();
+
+  sattSkala(skala);
+  tlSyncFalt();
+  tlRita();
+  brRita();
+  tbRita();
+  rkSync();
+  rkRita();
+  slRita();
+  visa(aktivVy);
+})();
+</script>
+</body>
+</html>
