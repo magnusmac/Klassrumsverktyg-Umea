@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klassrumsapparaten</title>
+<style>
+:root{
+--sv-app-yta:#1A1A18;--sv-app-text:#F2F0EA;--sv-app-dampad:#8A8880;
+--sv-app-linje:#4A4844;--sv-app-inaktiv:#3A3936;
+--sv-app-accent:#FF5A1F;--sv-app-accent-text:#2B1005;
+/* Signalfärgerna i tokenuppsättningen är mörk text på ljus botten. På den
+   mörka plattan behövs tända varianter, annars går de inte att läsa på håll. */
+--sv-app-signal-fel:#E5484D;--sv-app-signal-varning:#FFB224;--sv-app-signal-klart:#4CC38A;
+--sv-mono:ui-monospace,"SF Mono","Roboto Mono",Menlo,monospace;
+--sv-steg-1:8px;--sv-steg-2:12px;--sv-steg-3:16px;--sv-steg-4:24px;--sv-steg-5:32px;
+--sv-radie:8px;--sv-radie-kort:12px;--sv-harlinje:0.5px;--sv-tryckyta:44px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--sv-app-yta);color:var(--sv-app-text);
+  font-family:var(--sv-mono);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ---- Enhetsväljare ---- */
+.panel{
+  display:flex;align-items:center;gap:var(--sv-steg-1);
+  padding:var(--sv-steg-2) var(--sv-steg-3);
+  border-bottom:var(--sv-harlinje) solid var(--sv-app-linje);
+  flex-wrap:wrap;flex:0 0 auto;
+}
+.flik{
+  min-height:var(--sv-tryckyta);padding:0 var(--sv-steg-2);
+  display:flex;flex-direction:column;justify-content:center;
+  background:transparent;border:var(--sv-harlinje) solid transparent;
+  border-radius:var(--sv-radie);
+  color:var(--sv-app-dampad);font-family:inherit;font-size:13px;
+  cursor:pointer;transition:color 120ms ease,border-color 120ms ease;
+}
+.flik:hover{color:var(--sv-app-text)}
+.flik:active{transform:scale(.98)}
+.flik[aria-selected="true"]{
+  color:var(--sv-app-text);border-color:var(--sv-app-linje);background:var(--sv-app-inaktiv);
+}
+.flik__nr{font-size:10px;color:var(--sv-app-dampad);letter-spacing:.5px}
+.flik[aria-selected="true"] .flik__nr{color:var(--sv-app-text)}
+.panel__slut{margin-left:auto;display:flex;gap:var(--sv-steg-1)}
+
+/* ---- Scen ---- */
+main{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:var(--sv-steg-4);min-height:0}
+.enhet{display:none;flex-direction:column;align-items:center;gap:var(--sv-steg-4);width:100%;max-width:900px}
+.enhet[data-aktiv]{display:flex}
+
+.display{
+  font-size:clamp(56px,17vw,190px);line-height:1;letter-spacing:-2px;
+  font-variant-numeric:tabular-nums;text-align:center;
+  overflow-wrap:anywhere;
+}
+.display--liten{font-size:clamp(32px,9vw,86px);letter-spacing:-1px}
+.display__dec{font-size:.42em;color:var(--sv-app-dampad);letter-spacing:0}
+.etikett{font-size:11px;color:var(--sv-app-dampad);letter-spacing:.5px}
+
+/* ---- Kontroller ---- */
+.rad{display:flex;gap:var(--sv-steg-1);flex-wrap:wrap;justify-content:center;align-items:center}
+.knapp{
+  min-height:var(--sv-tryckyta);min-width:var(--sv-tryckyta);
+  padding:0 var(--sv-steg-3);
+  background:transparent;border:var(--sv-harlinje) solid var(--sv-app-linje);
+  border-radius:var(--sv-radie);color:var(--sv-app-text);
+  font-family:inherit;font-size:14px;cursor:pointer;
+  transition:background 120ms ease;
+}
+.knapp:hover{background:var(--sv-app-inaktiv)}
+.knapp:active{transform:scale(.98)}
+.knapp[aria-pressed="true"]{background:var(--sv-app-inaktiv);border-color:var(--sv-app-text)}
+.knapp--primar{
+  background:var(--sv-app-accent);border-color:transparent;
+  color:var(--sv-app-accent-text);padding:0 var(--sv-steg-5);font-size:15px;
+}
+.knapp--primar:hover{background:var(--sv-app-accent)}
+/* Avstängd knapp tappar accenten – den ska bara märka ut det man faktiskt kan göra */
+.knapp:disabled,
+.knapp--primar:disabled{
+  background:transparent;color:var(--sv-app-dampad);
+  border-color:var(--sv-app-inaktiv);cursor:default;
+}
+.knapp:disabled:hover,
+.knapp--primar:disabled:hover{background:transparent}
+.knapp:disabled:active{transform:none}
+
+textarea{
+  width:100%;min-height:180px;padding:var(--sv-steg-2);
+  background:var(--sv-app-yta);color:var(--sv-app-text);
+  border:var(--sv-harlinje) solid var(--sv-app-linje);border-radius:var(--sv-radie);
+  font-family:inherit;font-size:15px;line-height:1.8;resize:vertical;
+}
+textarea:focus{outline:none;border-color:var(--sv-app-text)}
+
+/* ---- Trafikljus ---- */
+.ljusrad{display:flex;gap:var(--sv-steg-4);flex-wrap:wrap;justify-content:center}
+.lampa{
+  display:flex;flex-direction:column;align-items:center;gap:var(--sv-steg-2);
+  background:transparent;border:none;padding:var(--sv-steg-1);
+  font-family:inherit;cursor:pointer;color:var(--sv-app-dampad);font-size:14px;
+}
+.lampa:active{transform:scale(.98)}
+.lampa__glob{
+  width:clamp(80px,20vw,150px);aspect-ratio:1;border-radius:50%;
+  border:var(--sv-harlinje) solid var(--sv-app-linje);
+  background:var(--sv-app-inaktiv);transition:background 120ms ease;
+}
+.lampa[aria-pressed="true"]{color:var(--sv-app-text)}
+.lampa[aria-pressed="true"] .lampa__glob{border-color:transparent}
+.lampa--stopp[aria-pressed="true"] .lampa__glob{background:var(--sv-app-signal-fel)}
+.lampa--vanta[aria-pressed="true"] .lampa__glob{background:var(--sv-app-signal-varning)}
+.lampa--kor[aria-pressed="true"] .lampa__glob{background:var(--sv-app-signal-klart)}
+
+/* ---- Tärning ---- */
+.tarningsrad{display:flex;gap:var(--sv-steg-3);flex-wrap:wrap;justify-content:center}
+.tarning{
+  width:clamp(100px,21vw,186px);aspect-ratio:1;
+  border:var(--sv-harlinje) solid var(--sv-app-linje);border-radius:var(--sv-radie-kort);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  padding:11%;gap:4%;place-items:center;
+}
+.tarning--tal{display:flex;align-items:center;justify-content:center;
+  font-size:clamp(42px,9vw,86px);letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.prick{width:100%;aspect-ratio:1;border-radius:50%;background:var(--sv-app-text)}
+
+/* ---- Varvlista ---- */
+.varv{
+  list-style:none;margin:0;padding:0;font-size:14px;color:var(--sv-app-dampad);
+  max-height:120px;overflow:auto;width:100%;max-width:340px;
+}
+.varv li{display:flex;justify-content:space-between;padding:2px 0;
+  border-bottom:var(--sv-harlinje) solid var(--sv-app-inaktiv);font-variant-numeric:tabular-nums}
+
+.notis{font-size:13px;color:var(--sv-app-dampad);min-height:1.5em;text-align:center}
+.dold{display:none !important}
+.piktogram{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+
+<div class="panel" role="tablist" aria-label="Verktyg">
+  <button class="flik" role="tab" aria-selected="true" data-mal="klocka">
+    <span class="flik__nr">unit 01</span>klocka
+  </button>
+  <button class="flik" role="tab" aria-selected="false" data-mal="timer">
+    <span class="flik__nr">unit 02</span>timer
+  </button>
+  <button class="flik" role="tab" aria-selected="false" data-mal="stoppur">
+    <span class="flik__nr">unit 03</span>stoppur
+  </button>
+  <button class="flik" role="tab" aria-selected="false" data-mal="namn">
+    <span class="flik__nr">unit 04</span>namn
+  </button>
+  <button class="flik" role="tab" aria-selected="false" data-mal="tarning">
+    <span class="flik__nr">unit 05</span>tärning
+  </button>
+  <button class="flik" role="tab" aria-selected="false" data-mal="ljus">
+    <span class="flik__nr">unit 06</span>ljud&shy;nivå
+  </button>
+  <div class="panel__slut">
+    <button class="knapp" id="helskarm" title="Helskärm" aria-label="Helskärm">
+      <svg class="piktogram" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<main>
+
+  <!-- unit 01 ---------------------------------------------------- -->
+  <section class="enhet" data-enhet="klocka" data-aktiv>
+    <div class="etikett">klockan är</div>
+    <div class="display" id="klockaDisplay">00:00</div>
+    <div class="notis" id="klockaDatum"></div>
+  </section>
+
+  <!-- unit 02 ---------------------------------------------------- -->
+  <section class="enhet" data-enhet="timer">
+    <div class="etikett" id="timerEtikett">nedräkning</div>
+    <div class="display" id="timerDisplay">05:00</div>
+    <div class="rad">
+      <button class="knapp" data-minuter="1">1 min</button>
+      <button class="knapp" data-minuter="3">3 min</button>
+      <button class="knapp" data-minuter="5">5 min</button>
+      <button class="knapp" data-minuter="10">10 min</button>
+      <button class="knapp" data-minuter="15">15 min</button>
+    </div>
+    <div class="rad">
+      <button class="knapp" id="timerMinus" aria-label="En minut mindre">−1 min</button>
+      <button class="knapp knapp--primar" id="timerStart">Starta</button>
+      <button class="knapp" id="timerPlus" aria-label="En minut mer">+1 min</button>
+      <button class="knapp" id="timerNoll">Nollställ</button>
+    </div>
+    <div class="notis" id="timerNotis"></div>
+  </section>
+
+  <!-- unit 03 ---------------------------------------------------- -->
+  <section class="enhet" data-enhet="stoppur">
+    <div class="etikett">tid</div>
+    <div class="display" id="stoppurDisplay">00:00<span class="display__dec">.0</span></div>
+    <div class="rad">
+      <button class="knapp knapp--primar" id="stoppurStart">Starta</button>
+      <button class="knapp" id="stoppurVarv">Varv</button>
+      <button class="knapp" id="stoppurNoll">Nollställ</button>
+    </div>
+    <ol class="varv" id="stoppurVarvlista"></ol>
+  </section>
+
+  <!-- unit 04 ---------------------------------------------------- -->
+  <section class="enhet" data-enhet="namn">
+    <div class="etikett" id="namnEtikett">namn i listan: 0</div>
+    <div class="display display--liten" id="namnDisplay">—</div>
+    <div class="rad">
+      <button class="knapp knapp--primar" id="namnSnurra">Snurra</button>
+      <button class="knapp" id="namnRedigera">Redigera listan</button>
+    </div>
+    <div class="notis" id="namnNotis">Lägg till namn för att kunna snurra.</div>
+
+    <div class="rad dold" id="namnRedigerare" style="width:100%;max-width:420px;flex-direction:column">
+      <textarea id="namnText" aria-label="Namn, ett per rad"
+                placeholder="Ett namn per rad&#10;&#10;Alva&#10;Bilal&#10;Cornelia"></textarea>
+      <div class="rad" style="width:100%">
+        <button class="knapp knapp--primar" id="namnSpara">Spara</button>
+        <button class="knapp" id="namnAvbryt">Avbryt</button>
+      </div>
+      <div class="notis">Namnen sparas bara i den här webbläsaren.</div>
+    </div>
+  </section>
+
+  <!-- unit 05 ---------------------------------------------------- -->
+  <section class="enhet" data-enhet="tarning">
+    <div class="etikett" id="tarningEtikett">2 tärningar, 6 sidor</div>
+    <div class="tarningsrad" id="tarningsrad"></div>
+    <div class="notis" id="tarningSumma"></div>
+    <div class="rad">
+      <button class="knapp knapp--primar" id="tarningKasta">Kasta</button>
+    </div>
+    <div class="rad">
+      <span class="etikett">antal</span>
+      <button class="knapp" data-antal="1">1</button>
+      <button class="knapp" data-antal="2">2</button>
+      <button class="knapp" data-antal="3">3</button>
+      <span class="etikett" style="margin-left:var(--sv-steg-3)">sidor</span>
+      <button class="knapp" data-sidor="6">6</button>
+      <button class="knapp" data-sidor="10">10</button>
+      <button class="knapp" data-sidor="20">20</button>
+    </div>
+  </section>
+
+  <!-- unit 06 ---------------------------------------------------- -->
+  <section class="enhet" data-enhet="ljus">
+    <div class="etikett">ljudnivå i rummet</div>
+    <div class="ljusrad">
+      <button class="lampa lampa--stopp" data-ljus="stopp" aria-pressed="false">
+        <span class="lampa__glob"></span>Helt tyst
+      </button>
+      <button class="lampa lampa--vanta" data-ljus="vanta" aria-pressed="true">
+        <span class="lampa__glob"></span>Viska
+      </button>
+      <button class="lampa lampa--kor" data-ljus="kor" aria-pressed="false">
+        <span class="lampa__glob"></span>Prata fritt
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+'use strict';
+
+/* ---------- Enhetsväljare ---------- */
+var flikar = document.querySelectorAll('.flik');
+var enheter = document.querySelectorAll('.enhet');
+
+function visaEnhet(namn) {
+  flikar.forEach(function (f) {
+    f.setAttribute('aria-selected', String(f.dataset.mal === namn));
+  });
+  enheter.forEach(function (e) {
+    if (e.dataset.enhet === namn) { e.setAttribute('data-aktiv', ''); }
+    else { e.removeAttribute('data-aktiv'); }
+  });
+  try { localStorage.setItem('ka-enhet', namn); } catch (e) {}
+}
+flikar.forEach(function (f) {
+  f.addEventListener('click', function () { visaEnhet(f.dataset.mal); });
+});
+
+document.getElementById('helskarm').addEventListener('click', function () {
+  if (document.fullscreenElement) { document.exitFullscreen(); }
+  else { document.documentElement.requestFullscreen().catch(function () {}); }
+});
+
+/* ---------- Gemensamt ---------- */
+function tvasiffrig(n) { return String(n).padStart(2, '0'); }
+
+// Kort pip vid noll – genereras i webbläsaren, ingen ljudfil behövs.
+function pip() {
+  try {
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) { return; }
+    var ctx = new Ctx();
+    var osc = ctx.createOscillator();
+    var vol = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    vol.gain.setValueAtTime(0.0001, ctx.currentTime);
+    vol.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    vol.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.9);
+    osc.connect(vol); vol.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.95);
+  } catch (e) {}
+}
+
+/* ---------- unit 01: klocka ---------- */
+var klockaDisplay = document.getElementById('klockaDisplay');
+var klockaDatum = document.getElementById('klockaDatum');
+var veckodagar = ['söndag','måndag','tisdag','onsdag','torsdag','fredag','lördag'];
+var manader = ['januari','februari','mars','april','maj','juni',
+               'juli','augusti','september','oktober','november','december'];
+
+function ritaKlocka() {
+  var d = new Date();
+  klockaDisplay.textContent = tvasiffrig(d.getHours()) + ':' + tvasiffrig(d.getMinutes());
+  klockaDatum.textContent = veckodagar[d.getDay()] + ' ' + d.getDate() + ' ' + manader[d.getMonth()];
+}
+ritaKlocka();
+setInterval(ritaKlocka, 1000);
+
+/* ---------- unit 02: timer ---------- */
+var timerDisplay = document.getElementById('timerDisplay');
+var timerStart = document.getElementById('timerStart');
+var timerNotis = document.getElementById('timerNotis');
+var timerEtikett = document.getElementById('timerEtikett');
+var timerSekunder = 300, timerKvar = 300, timerLoper = false, timerId = null, timerSlut = 0;
+
+function ritaTimer() {
+  var s = Math.max(0, Math.ceil(timerKvar));
+  timerDisplay.textContent = tvasiffrig(Math.floor(s / 60)) + ':' + tvasiffrig(s % 60);
+}
+function stannaTimer() {
+  timerLoper = false;
+  clearInterval(timerId);
+  timerId = null;
+  timerStart.textContent = 'Starta';
+}
+function tickTimer() {
+  timerKvar = (timerSlut - Date.now()) / 1000;
+  if (timerKvar <= 0) {
+    timerKvar = 0;
+    ritaTimer();
+    stannaTimer();
+    timerEtikett.textContent = 'tiden är ute';
+    pip();
+    return;
+  }
+  ritaTimer();
+}
+timerStart.addEventListener('click', function () {
+  if (timerLoper) {
+    stannaTimer();
+    timerEtikett.textContent = 'pausad';
+    return;
+  }
+  if (timerKvar <= 0) { return; }
+  timerSlut = Date.now() + timerKvar * 1000;
+  timerLoper = true;
+  timerStart.textContent = 'Paus';
+  timerEtikett.textContent = 'nedräkning';
+  timerNotis.textContent = '';
+  timerId = setInterval(tickTimer, 100);
+});
+function sattTimer(sek) {
+  stannaTimer();
+  timerSekunder = Math.max(0, sek);
+  timerKvar = timerSekunder;
+  timerEtikett.textContent = 'nedräkning';
+  timerNotis.textContent = '';
+  ritaTimer();
+}
+document.querySelectorAll('[data-minuter]').forEach(function (b) {
+  b.addEventListener('click', function () { sattTimer(Number(b.dataset.minuter) * 60); });
+});
+document.getElementById('timerNoll').addEventListener('click', function () { sattTimer(timerSekunder); });
+document.getElementById('timerMinus').addEventListener('click', function () {
+  timerKvar = Math.max(0, timerKvar - 60);
+  if (timerLoper) { timerSlut = Date.now() + timerKvar * 1000; }
+  ritaTimer();
+});
+document.getElementById('timerPlus').addEventListener('click', function () {
+  timerKvar = timerKvar + 60;
+  if (timerLoper) { timerSlut = Date.now() + timerKvar * 1000; }
+  ritaTimer();
+});
+ritaTimer();
+
+/* ---------- unit 03: stoppur ---------- */
+var stoppurDisplay = document.getElementById('stoppurDisplay');
+var stoppurStart = document.getElementById('stoppurStart');
+var stoppurVarvlista = document.getElementById('stoppurVarvlista');
+var spGangen = 0, spStartad = 0, spLoper = false, spId = null, spVarv = [];
+
+function spTid() { return spGangen + (spLoper ? Date.now() - spStartad : 0); }
+function spFormat(ms) {
+  var s = Math.floor(ms / 1000);
+  return tvasiffrig(Math.floor(s / 60)) + ':' + tvasiffrig(s % 60) + '.' + Math.floor((ms % 1000) / 100);
+}
+function ritaStoppur() {
+  var t = spFormat(spTid());
+  var delar = t.split('.');
+  stoppurDisplay.innerHTML = delar[0] + '<span class="display__dec">.' + delar[1] + '</span>';
+}
+stoppurStart.addEventListener('click', function () {
+  if (spLoper) {
+    spGangen += Date.now() - spStartad;
+    spLoper = false;
+    clearInterval(spId);
+    stoppurStart.textContent = 'Starta';
+  } else {
+    spStartad = Date.now();
+    spLoper = true;
+    spId = setInterval(ritaStoppur, 100);
+    stoppurStart.textContent = 'Paus';
+  }
+  ritaStoppur();
+});
+document.getElementById('stoppurVarv').addEventListener('click', function () {
+  var t = spTid();
+  if (t === 0) { return; }
+  spVarv.push(t);
+  stoppurVarvlista.innerHTML = spVarv.map(function (ms, i) {
+    return '<li><span>varv ' + (i + 1) + '</span><span>' + spFormat(ms) + '</span></li>';
+  }).reverse().join('');
+});
+document.getElementById('stoppurNoll').addEventListener('click', function () {
+  clearInterval(spId);
+  spGangen = 0; spLoper = false; spVarv = [];
+  stoppurStart.textContent = 'Starta';
+  stoppurVarvlista.innerHTML = '';
+  ritaStoppur();
+});
+ritaStoppur();
+
+/* ---------- unit 04: namn ---------- */
+var namnDisplay = document.getElementById('namnDisplay');
+var namnEtikett = document.getElementById('namnEtikett');
+var namnNotis = document.getElementById('namnNotis');
+var namnSnurra = document.getElementById('namnSnurra');
+var namnRedigerare = document.getElementById('namnRedigerare');
+var namnText = document.getElementById('namnText');
+var namnLista = [], snurrar = false, snurrRakning = 0;
+
+function lasNamn() {
+  try {
+    var r = localStorage.getItem('ka-namn');
+    namnLista = r ? JSON.parse(r) : [];
+  } catch (e) { namnLista = []; }
+  if (!Array.isArray(namnLista)) { namnLista = []; }
+  ritaNamnstatus();
+}
+function ritaNamnstatus() {
+  namnEtikett.textContent = 'namn i listan: ' + namnLista.length;
+  namnSnurra.disabled = namnLista.length === 0;
+  if (namnLista.length === 0) {
+    namnNotis.textContent = 'Lägg till namn för att kunna snurra.';
+    namnDisplay.textContent = '—';
+  }
+}
+namnSnurra.addEventListener('click', function () {
+  if (snurrar || namnLista.length === 0) { return; }
+  snurrar = true;
+  namnSnurra.disabled = true;
+  namnNotis.textContent = '';
+
+  var steg = 0;
+  var totalt = 18 + Math.floor(Math.random() * 8);
+  var vald = Math.floor(Math.random() * namnLista.length);
+
+  function nastaSteg() {
+    namnDisplay.textContent = namnLista[(vald + totalt - steg) % namnLista.length];
+    steg++;
+    if (steg <= totalt) {
+      // Bromsar in mot slutet
+      setTimeout(nastaSteg, 40 + Math.pow(steg / totalt, 3) * 260);
+    } else {
+      namnDisplay.textContent = namnLista[vald];
+      snurrar = false;
+      namnSnurra.disabled = false;
+      snurrRakning++;
+      // Lekmoment: dyker upp först när läraren snurrar om och om igen
+      if (snurrRakning >= 4) {
+        namnNotis.textContent = 'Samma personer, ny ordning.';
+      }
+    }
+  }
+  nastaSteg();
+});
+document.getElementById('namnRedigera').addEventListener('click', function () {
+  namnText.value = namnLista.join('\n');
+  namnRedigerare.classList.remove('dold');
+  namnText.focus();
+});
+document.getElementById('namnAvbryt').addEventListener('click', function () {
+  namnRedigerare.classList.add('dold');
+});
+document.getElementById('namnSpara').addEventListener('click', function () {
+  namnLista = namnText.value.split('\n').map(function (s) { return s.trim(); })
+                            .filter(function (s) { return s !== ''; });
+  try { localStorage.setItem('ka-namn', JSON.stringify(namnLista)); } catch (e) {}
+  namnRedigerare.classList.add('dold');
+  snurrRakning = 0;
+  namnNotis.textContent = '';
+  namnDisplay.textContent = '—';
+  ritaNamnstatus();
+});
+lasNamn();
+
+/* ---------- unit 05: tärning ---------- */
+var tarningsrad = document.getElementById('tarningsrad');
+var tarningSumma = document.getElementById('tarningSumma');
+var tarningEtikett = document.getElementById('tarningEtikett');
+var tAntal = 2, tSidor = 6, tKastar = false;
+
+// Prickarnas rutor i ett 3×3-raster, per tärningsvärde
+var prickmonster = {
+  1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]
+};
+
+function ritaTarningar(varden) {
+  tarningsrad.innerHTML = '';
+  for (var i = 0; i < tAntal; i++) {
+    var v = varden ? varden[i] : null;
+    var d = document.createElement('div');
+    if (tSidor === 6 && v) {
+      d.className = 'tarning';
+      var rutor = prickmonster[v];
+      for (var r = 0; r < 9; r++) {
+        var cell = document.createElement('span');
+        if (rutor.indexOf(r) !== -1) { cell.className = 'prick'; }
+        d.appendChild(cell);
+      }
+      d.setAttribute('aria-label', v + ' prickar');
+    } else {
+      d.className = 'tarning tarning--tal';
+      d.textContent = v ? String(v) : '·';
+    }
+    tarningsrad.appendChild(d);
+  }
+  tarningSumma.textContent = (varden && tAntal > 1)
+    ? 'summa ' + varden.reduce(function (a, b) { return a + b; }, 0) : '';
+}
+function markera(attr, varde) {
+  document.querySelectorAll('[' + attr + ']').forEach(function (b) {
+    b.setAttribute('aria-pressed', String(Number(b.getAttribute(attr)) === varde));
+  });
+}
+function ritaTarningsetikett() {
+  tarningEtikett.textContent = tAntal + (tAntal === 1 ? ' tärning, ' : ' tärningar, ') + tSidor + ' sidor';
+}
+document.getElementById('tarningKasta').addEventListener('click', function () {
+  if (tKastar) { return; }
+  tKastar = true;
+  var kvar = 9;
+  var rulla = setInterval(function () {
+    var v = [];
+    for (var i = 0; i < tAntal; i++) { v.push(1 + Math.floor(Math.random() * tSidor)); }
+    ritaTarningar(v);
+    if (--kvar <= 0) { clearInterval(rulla); tKastar = false; }
+  }, 80);
+});
+document.querySelectorAll('[data-antal]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    tAntal = Number(b.dataset.antal);
+    markera('data-antal', tAntal);
+    ritaTarningsetikett();
+    ritaTarningar(null);
+  });
+});
+document.querySelectorAll('[data-sidor]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    tSidor = Number(b.dataset.sidor);
+    markera('data-sidor', tSidor);
+    ritaTarningsetikett();
+    ritaTarningar(null);
+  });
+});
+markera('data-antal', tAntal);
+markera('data-sidor', tSidor);
+ritaTarningsetikett();
+ritaTarningar(null);
+
+/* ---------- unit 06: ljudnivå ---------- */
+document.querySelectorAll('[data-ljus]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('[data-ljus]').forEach(function (a) {
+      a.setAttribute('aria-pressed', String(a === b));
+    });
+  });
+});
+
+/* ---------- Återställ senast använda enhet ---------- */
+try {
+  var sparad = localStorage.getItem('ka-enhet');
+  if (sparad && document.querySelector('.enhet[data-enhet="' + sparad + '"]')) { visaEnhet(sparad); }
+} catch (e) {}
+</script>
+</body>
+</html>
